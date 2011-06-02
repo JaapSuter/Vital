@@ -1,0 +1,29 @@
+// Copyright 2004 Jaap Suter. Distributed under the Vital
+// Software License, Version 1.0. (See accompanying file
+// LICENSE_1_0.txt or copy at http://www.jaapsuter.com/LICENSE_1_0.txt)
+
+#ifndef VITAL_MATH_CLIFFORD_LIMITS_HPP
+#define VITAL_MATH_CLIFFORD_LIMITS_HPP
+
+#ifdef _MSC_VER
+    #pragma once
+#endif
+
+#include <boost/static_assert.hpp>
+
+#ifndef VITAL_MATH_CLIFFORD_MAX_MULTI_VECTOR_SIZE
+    #define VITAL_MATH_CLIFFORD_MAX_MULTI_VECTOR_SIZE 32
+#endif
+
+#ifndef VITAL_MATH_CLIFFORD_MAX_DIMENSION
+    #define VITAL_MATH_CLIFFORD_MAX_DIMENSION 5
+#endif
+
+#ifndef VITAL_MATH_CLIFFORD_MAX_DIMENSION_PLUS_ONE
+    #define VITAL_MATH_CLIFFORD_MAX_DIMENSION_PLUS_ONE 6
+#endif
+
+BOOST_STATIC_ASSERT((1<<VITAL_MATH_CLIFFORD_MAX_DIMENSION) == VITAL_MATH_CLIFFORD_MAX_MULTI_VECTOR_SIZE);
+BOOST_STATIC_ASSERT(VITAL_MATH_CLIFFORD_MAX_DIMENSION_PLUS_ONE == (VITAL_MATH_CLIFFORD_MAX_DIMENSION + 1));
+
+#endif

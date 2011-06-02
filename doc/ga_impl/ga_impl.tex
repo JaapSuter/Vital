@@ -1,0 +1,801 @@
+\documentclass[10pt]{article}
+
+\author{Jaap Suter}
+\title{Clifford - a fast Geometric Algebra implementation using Meta Programming}
+
+\usepackage{epsfig}
+\usepackage{color}
+\usepackage{amssymb, amsmath}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Over the last few years geometric algebra has gained some enthusiasm in computer science, mostly because of its elegance. However, traditional methods for computational geometry still outperform even the fastest geometric algebra libraries. I present a new generic implementation that utilizes meta programming. By using compile-time calculations we can use the power of geometric algebra without sacrificing performance or elegance.
+\end{abstract}
+
+\section{Introduction}
+
+Despite claims that geometric algebra will replace traditional vector and matrix algebra in computer graphics the progress has been slow. There exist several geometric algebra implementations, yet none of these is able to match the performance of traditional techniques.
+
+Many applications are not able to sacrifice performance for elegance. The short history of computer graphics has proven that given a choice between an elegant yet slow solution and a hack that is fast, the hack will be used. This is understandable, yet sometimes unfortunate.
+
+This paper describes a library that uses meta programming to create optimized code. The key is that decisions about dimensions, multivector signatures, etcetera can be made during programming, and can therefore be analyzed during the \emph{compilation} phase.
+
+This analysis has traditionally been performed during the \emph{programming} phase. Take for example a common quaternion type. Many computer graphics applications use such a type to express their rotations. In theory, a quaternion is simply a multivector that happens to contain a scalar and a bivector. Here, the analysis is done by the programmer and for the sake of optimization he writes a separate quaternion type. The same happens to vectors and matrices, whereas it would be more elegant if multivectors were the only type a program dealt with.
+
+The library under discussion provides a solution that sits somewhere in between. I provide a generic multivector type that is parametrized over the blades it consists of. This way the programmer still needs to specify the exact multivector type, but after that the compiler takes care of the rest, optimizing both time- and space-wise. In a way, the library provides a factory for particular multivector types optimized for size and speed.
+
+The language of choice is C++, for three reasons. First, it is the language I am most proficient with, so it was the easiest choice to prototype my ideas. Second, the language provides a unique blend of compile-time and runtime mechanisms that can be used for code-generation purposes. Some other languages provide meta programming facilities through meta classes, but these are still runtime mechanisms which defeats the purpose of meta programming in my case. Finally, it is the most common language in computer graphics already because of its performance characteristics. 
+
+Some rudimentary knowledge on geometric algebra is required to understand the material herein. An understanding of multivectors and their components, algebra signatures, and the geometric product is sufficient to get the general idea. For an introduction to geometric algebra, see the references \cite{bib:primer}
+\cite{bib:dorst honing geometric algebra} \cite{bib:hestenes new foundations}. Some familiarity with C++ will be useful, but for programmers in general the material should be understandable. The focus is on the actual meta-programming ideas, not so much the actual C++ examples, which should be regarded as pseudo-code.
+
+Alongside this paper is a library \cite{bib:clifford} that has been used to implement and test my ideas. However, it should be regarded as a prototype as described in the section on its limitations, and a study for future research as described in the conclusion.
+
+\section{Previous Work}
+
+All existing geometric algebra libraries have one thing in common; they use a single type for all multivectors. This means that for the compiler, the type of a bivector is the same as the type of a spinor, which is the same as the type of a multivector containing all grades.
+
+While true to the nature of geometric algebra, where anything is a multivector, it is rather inefficient. The multivector type either has to store all the $2^{p+q}$ for an algebra $\mathcal{C}\ell_{p,q}$, or it has to use some sort of runtime mechanism to store only those components necessary.
+
+The nklein::geoma \cite{bib:nklein} library uses the first technique. It provides a straightforward multivector type templatized over the signature of the algebra. Given an algebra $\mathcal{C}\ell_{p,q}$ it constructs a multivector type able to hold an array of $2^{p+q}$ elements of scalar type. Together these
+form the $\binom{p+q}{k}$ forms for all $0 \leq k \leq p+q$.
+
+Now, if a programmer needs a simple vector in $\mathcal{C}\ell_{3}$ he ends up with a multivector that contains $2^3=8$ components. This is a waste of space. It becomes a waste of time if the programmer starts multiplying two vectors, requiring a total of $64$ multiplications and additions or subtractions.
+
+Most other libraries like CLU \cite{bib:clu} and Gaigen \cite{bib:gaigen} use the second technique. The drawback of this technique is threefold. First, the multivector type has to store extra information about what blades the multivector contains at a given time, which adds a space overhead. Secondly, this scheme
+requires dynamic memory allocations causing both a space and size overhead. Finally, implementations of the different products like the inner, outer and geometric, are not possible without some sort of runtime selection based on the blades the two operands contain. This means the extra time overhead of conditionals in the
+products.
+
+The Clifford library takes an entirely new approach. It encodes the information about what blades a multivector contains into the type itself. This allows the compiler to reason about the size of the different multivectors, and most importantly about what operations are necessary for the different products.
+
+However, before we get to that we review a design that looks a lot like the nklein::geoma \cite{bib:nklein} approach. This will introduce us to some concepts that will be useful later.
+
+\section{A Simple Generic Multivector}
+
+If we want to come up with a generic library for geometric algebra, we need to abstract at least two things. First, the signature of the algebra $\mathcal{C}\ell_{p, q}$ denoted with \verb"P" and \verb"Q". Second, the scalar type denoted with \verb"T". Obviously the scalar type \verb"T" has to satisfy
+certain concepts, most importantly it has to form an algebra.
+
+The code samples that follow will take certain shortcuts for brevity. The multivector class will be called \verb"mv", I will use \verb"r" for return values, and integers where unsigned integers or \verb "std::size_t" might be more appropriate.
+
+Given a signature \verb"P" and \verb"Q", the number of components required for a full multivector is $2^{P+Q}$. Using this we can implement a simple generic multivector class as follows:
+\begin{verbatim}
+    template <int P, int Q, class T>
+    class mv
+    {
+        static const int num_components = 1 << (P+Q);
+        T m_components[num_components];
+    };
+\end{verbatim}
+
+This multivector class has an array of $2^{p+q}$ components of scalar type representing the basis blades. The order in which they are stored is not important right now. Let us look at the geometric product first. Because the geometric product is multi-linear it can be implemented using two nested loops, as follows:
+
+\begin{verbatim}
+    template <int P, int Q, class T>
+    mv<P, Q, T> geometric_product(const mv<P, Q, T>& lhs,
+                                  const mv<P, Q, T>& rhs)
+    {
+        multi_vector<P, Q, T> r;
+
+        for (int i = 0; i < mv<P, Q, T>::num_components; ++i)
+            for (int j = 0; j < mv<P, Q, T>::num_components; ++j)
+                r.m_components[index] += sign
+                                      * lhs.m_components[i]
+                                      * rhs.m_components[j];
+        return result;
+    }
+\end{verbatim}
+
+However, two things are still missing in the above. The \verb"index" and \verb"sign" still need to be calculated.
+
+\subsection{The Index}
+
+Given two basis unknown blades of a multivector, $e_{n\ldots m}$ and $e_{s\ldots t}$, we are interested in the resulting index of the component corresponding with their geometric product $e_{n\ldots m} \cdot e_{s\ldots t}$.
+
+Many existing papers \cite{bib:primer} has demonstrated that if a basis vector appears both in basis blade $\cdot e_{m\ldots n}$ and in $\cdot e_{s\ldots t}$ it cancels itself out. If it only appears in one of them, it stays in the result.
+
+This sound reminiscent of a particular bitwise operator. How about the exclusive or?
+\begin{align*}
+    0 \oplus 0 = 0 \\
+    0 \oplus 1 = 1 \\
+    1 \oplus 0 = 1 \\
+    1 \oplus 1 = 0
+\end{align*}
+
+If there is somehow a clever bitwise representation for the basis blade indices, we might be able to use the exclusive or operator to find the index of the result. It turns out to be very easy. Here's an example for $\mathcal{C}\ell_3$:
+
+\begin{center}
+\begin{tabular}{ll}
+$1 =$ & \verb"001" \\
+&\\
+$e_1 =$ & \verb"001" \\
+$e_2 =$ & \verb"010" \\
+$e_3 =$ & \verb"100" \\
+&\\
+$e_{12} =$ & \verb"011" \\
+$e_{13} =$ & \verb"101" \\
+$e_{23} =$ & \verb"110" \\
+&\\
+$e_{123} =$ & \verb"111" \\
+\end{tabular}
+\end{center}
+
+Notice now how the binary representation is chosen. Each bit-position corresponds with a basis-vector. If a particular basis-vector appears in the basis-blade the corresponding bit is set. As a consequence the basis-scalar $1$ corresponds to the number zero, and the pseudo-scalar has all bits set.
+
+To understand why this is useful, consider the geometric product of the basis blades $e_{12} =$\verb"011" and $e_{23} =$\verb"110", which is equal to $e_{13} =
+$\verb"101"$=$\verb"011"$\oplus$\verb"110". Notice that this approach does not correctly take the sign into account because it cannot distinguish between the order basis vectors, i.e. $e_{13} =$\verb"101" and $e_{31} =$\verb"101". We will deal with this later.
+
+Using these indices, we can now understand how the basis blades are stored in the \verb"mv<P, Q, T>::m_components" array. We simply take the bitwise representation and use it as the index. Using $\mathcal{C}\ell_3$ as an example:
+
+\begin{center}
+\begin{tabular}{lll}
+\verb"mv<3, 0, T>::m_componts[0]" & $= 1 $      &= \verb"000"\\
+\verb"mv<3, 0, T>::m_componts[1]" & $= e_1$     &= \verb"001" \\
+\verb"mv<3, 0, T>::m_componts[2]" & $= e_2$     &= \verb"010"\\
+\verb"mv<3, 0, T>::m_componts[3]" & $= e_{12}$  &= \verb"011"\\
+\verb"mv<3, 0, T>::m_componts[4]" & $= e_3$     &= \verb"100"\\
+\verb"mv<3, 0, T>::m_componts[5]" & $= e_{13}$  &= \verb"101"\\
+\verb"mv<3, 0, T>::m_componts[6]" & $= e_{23}$  &= \verb"110"\\
+\verb"mv<3, 0, T>::m_componts[7]" & $= e_{123}$ &= \verb"111"
+\end{tabular}
+\end{center}
+
+Notice the non-trivial order. A more straightforward or intuitive
+approach would simply put the scalar at the front, then all the
+basis vectors, then all the basis bivectors, etcetera. However,
+the above approach allows us to implement the geometric product as
+follows:
+
+\begin{verbatim}
+    template <int P, int Q, class T>
+    mv<P, Q, T> geometric_product(const mv<P, Q, T>& lhs,
+                                  const mv<P, Q, T>& rhs)
+    {
+        multi_vector<P, Q, T> r;
+
+        for (int i = 0; i < mv<P, Q, T>::num_components; i)
+            for (int j = 0; j < mv<P, Q, T>::num_components; ++j)
+                r.m_components[i ^ j] += sign
+                                        * lhs.m_components[i]
+                                        * rhs.m_components[j];
+        return result;
+    }
+\end{verbatim}
+
+Notice the use of the use of the exclusive bitwise or to calculate the index of the resulting basis blade.
+
+As an aside, it may be worth mentioning where the order of basis bivectors, the $e_{12}, e_{13}, e_{23}$, comes from. Most literature uses the more intuitive $e_{12}, e_{23}, e_{31}$ because it is circular. However, this argument breaks down in dimensions beyond three as there is now way to order $e_{12}, e_{13}, e_{14}, e_{23}, e_{24}, e_{34}$. Therefore, I choose a different ordering, simply enumerating all subsets and then ordering them by size (of their bitwise representation). This is never ambiguous, not even in higher dimensions.
+
+\subsection{Sign}
+
+The last problem in the afore mentioned geometric product implementation is the \verb"sign". This was briefly mentioned earlier while demonstrating that the bitwise representation cannot distinguish between, for example, $e_{13} =$\verb"101" and $-e_{13} = e_{31} =$\verb"101". In the source, this means that:
+\begin{verbatim}
+    lhs.m_components[i] * rhs.m_components[j]
+\end{verbatim}
+can have a different sign than:
+\begin{verbatim}
+    rhs.m_components[i] * lhs.m_components[j]
+\end{verbatim}
+We solve this by using a two dimensional $(P+Q)\times(P+Q)$ sign table containing a $1$ or a $-1$ for each element. The multiplication of a component with index \verb"i" and a component with index \verb"j" needs to be corrected by a sign from \verb"sign_table[i][j]".
+
+Constructing such a table has to do with the number of times two basis vectors need to swap to annihilate matching ones. It is easy to implement using a few loops and some bitwise operators. It is explained in the nklein::geoma documentation \cite{bib:nklein docs}.
+
+Using this table, the complete implementation of the geometric product ends up looking like this:
+
+\begin{verbatim}
+    template <int P, int Q, class T>
+    mv<P, Q, T>
+    geometric_product(const mv<P, Q, T>& lhs,
+                       const mv<P, Q, T>& rhs)
+    {
+        multi_vector<P, Q, T> r;
+
+        for (int i = 0; i < mv<P, Q, T>::num_components; i)
+            for (int j = 0; j < mv<P, Q, T>::num_components; ++j)
+                r.m_components[i ^ j] += sign_table[i][j]
+                                        * lhs.m_components[i]
+                                        * rhs.m_components[j];
+        return result;
+    }
+\end{verbatim}
+
+I first encountered this approach in a geometric algebra prototype by Simon Brown. Later I found that nklein::geoma is using something like the above, and even the other libraries seem to use the bitwise representation in one place or another.
+
+My initial geometric algebra implementation was exactly like the above with the addition of a seperate blade type that could represent generic $k$-blades. This was definitely a performance improvement, but every time two blades combined into a non-trivial multivector I had to resort to using a full multivector. At one point I considered writing a quaternion type that contained a scalar and a bivector. However, I realized that soon after that I would need yet another specialized type, and yet another one, requiring a lot of boilerplate code and duplication.
+ 
+Fortunately, some discussions with Patrick Harty started me thinking about exploiting meta programming to let the compiler do the complicated work.
+
+\section{Meta Programming}
+
+In 1994, Erwin Unruh wrote a C++ program that produced a series of error messages containing the first \verb"N" prime numbers up to a particular \verb"N". \cite{bib:erwin unruh} This program demonstrated for the first time that the C++ template mechanism provides a way of doing compile-time calculations. This allows one compiler to be used for both compile-time and runtime programming.
+
+This section will briefly discuss some introductory-level meta programming techniques in C++ to show what it can do. For a more thorough discussion of meta programming techniques see the references \cite{bib:todd velhuizen meta programming} \cite{bib:boost mpl}\cite{bib:vandevoorde}.
+
+\subsection{An example meta function}
+
+Consider the following code, which calculates the faculty for a given number.
+\begin{verbatim}
+    template<int N>
+    struct faculty
+    {
+        static const int value = N * faculty<N - 1>::value;
+    };
+
+    template <>
+    struct faculty<0>
+    {
+        static const int value = 0;
+    };
+\end{verbatim}
+We call the above a meta function, and it can be invoked as follows:
+\begin{verbatim}
+    int i = faculty<4>::value;
+\end{verbatim}
+The compiler will calculate the corresponding value during the
+compilation phase. The output will only contain the literal $24$
+and assign that to the variable \verb"i".
+
+Notice how we provide a generic template that takes any value \verb"N", and a specialization for the case where \verb"N = 0". The generic template invokes itself recursively with the specialized template as the terminating condition. This may remind you of functional programming. In fact, because the C++ template mechanism does not allow side-effects, this so-called meta programming is exactly like functional programming. Its syntax is considered to be obscure by many and compilers limit the amount of work that can be done but in theory the possibilities are endless.
+
+\subsection{Cons, Car and Cdr in C++}
+
+For example, one can write compile-time programs that have a Lisp feel to them, using the following two structures.
+\begin{verbatim}
+    template<class Head, class Tail>
+    struct type_list
+    {
+        typedef Head head;
+        typedef Tail tail;
+    }
+
+    struct end_of_list {};
+\end{verbatim}
+Which allows us to construct (cons) a compile-time list as follows:
+\begin{verbatim}
+    typedef type_list<char,
+                       type_list<int,
+                                  type_list<float,
+                                             end_of_list
+                                          >
+                               >
+                    > some_list_of_types;
+\end{verbatim}
+If you couple this with the fact that types can hold compile-time
+integral constants, by doing:
+\begin{verbatim}
+    template <int Value>
+    struct int_c
+    {
+        static const int value = Value;
+    };
+\end{verbatim}
+We have the necessary tools to create compile-time lists of
+constant values. For example:
+\begin{verbatim}
+    typedef type_list<int_c<0>,
+                       type_list<int_c<2>,
+                                  type_list<int_c<5>,
+                                             end_of_list
+                                          >
+                               >
+                    > list_that_holds_0_2_and_5;
+\end{verbatim}
+would be a compile-time list that holds the values 0, 2 and 5. As
+a last example, let's write a meta function that accumulates all
+values in a list. Here's the generic function:
+
+\begin{verbatim}
+    template <class List>
+    struct accumulate
+    {
+        static const int value = List::head::value
+                + accumulate<typename List::tail>::value;
+    };
+\end{verbatim}
+And here's the specialized template to terminate the recursion:
+\begin{verbatim}
+    template <>
+    struct<end_of_list> accumulate
+    {
+        static const int value = 0;
+    };
+\end{verbatim}
+If we were to call this function like this:
+\begin{verbatim}
+    int sum = accumulate<list_that_holds_0_2_and_5>::value;
+\end{verbatim}
+The resulting code would contain a constant with the value
+\verb"7" and directly assign it to the variable \verb"sum".
+
+Since 1994, meta programming has come a long way. Recently the
+Boost Meta Programming Library (MPL) \cite{bib:boost mpl} was
+released. It provides abstractions for compile-time containers,
+algorithms and iterators, and greatly simplifies many notational
+aspects. It is this library I have used in to create an optimized
+geometric algebra implementation. For more information on
+meta-programming using C++, see the references. \cite{bib:todd
+velhuizen meta programming} \cite{bib:boost mpl} \cite{bib:modern
+c++ design}
+
+\section{The Clifford Approach}
+
+My first approach abstracted multivectors over the scalar type and
+the dimension of the algebra it belonged to. In order to get the
+necessary space and time optimizations I had to do the
+compile-time equivalent of what some other libraries do at
+runtime. I needed a third abstraction specifying the contents of a
+multivector, something that would allow the following definition
+of a multivector instance:
+\begin{verbatim}
+    mv<3, 0, float, scalar           > s;
+    mv<3, 0, float, scalar, bivector > quaternion;
+    mv<3, 0, float, vector, trivector> m;
+\end{verbatim}
+Thus, added template arguments would specify what the multivector
+contains, and the resulting instance would only contain the
+required components. Obviously using names for such a
+specification wouldn't be very extensible towards higher
+dimensions. Therefore, I used the grades of those blades you want
+the multivector to contain. The resulting code would look like
+this:
+\begin{verbatim}
+    mv<3, 0, float, 0   > s;
+    mv<3, 0, float, 0, 2> quaternion;
+    mv<3, 0, float, 1, 3> m;
+\end{verbatim}
+Unfortunately this doesn't work, because C++ doesn't support
+variable argument lists for templates. There is an informal
+proposal to add these to the standard \cite{bib:vandevoorde}, but
+for now I needed something else. This led to the introduction of
+grade lists.
+
+\subsection{Grade Lists}
+
+A grade list is a compile time container containing the grades
+that a particular multivector consists of. For example, using the
+Boost MPL syntax, we could specify the gradelist for a multivector
+containing a scalar, bivector, trivector and $5$-blade as follows:
+\begin{verbatim}
+    typedef list_c<int, 0, 2, 3, 5> multivector_specification;
+\end{verbatim}
+Thus, if the grade list has only one element it specifies a blade.
+If it has all elements up until the dimension of the algebra, it
+specifies a complete multivector. Note that grade lists cannot be
+empty, and cannot contain grades higher than the dimension of the
+algebra.
+
+This completes the abstraction for the elements of our geometric algebra. To summarize, we have an \verb"Algebra" with signature \verb"P" and
+\verb"Q", the scalar type \verb"T" and finally our \verb"GradeList" to specify the contents. 
+
+\subsection{Elements}
+
+All the above results in the the following definition for elements
+of a particular algebra:
+\begin{verbatim}
+    template<class T, class GradeList, class Algebra>
+    class element {
+
+        static const size_t size
+            = meta::num_components_for<
+                        GradeList,
+                        Algebra
+                                      > value;
+
+        T _m[size];
+    };
+\end{verbatim}
+
+Here, \verb"meta::num_components_for<>" is a meta function
+returning the number of components required to store all blades in
+the \verb"GradeList" using the given \verb"Algebra". Notice that
+this is calculated at compile-time. As a result we can define an
+in-class array of components. This means we won't need dynamic
+memory management to control the size of our algebra elements. As
+a result, barring alignment and packing, the following holds:
+
+\begin{verbatim}
+    typedef list_c<int, 0         > scalar;
+    typedef list_c<int, 1         > vector;
+    typedef list_c<int, 0, 2      > spinor;
+    typedef list_c<int, 0, 1, 2, 3> multi_vector;
+
+    typedef algebra<3, 0> C_3; // Euclidian space
+
+    sizeof(element<float, scalar,       C_3> == 1 * sizeof(float);
+    sizeof(element<float, vector,       C_3> == 3 * sizeof(float);
+    sizeof(element<float, spinor,       C_3> == 4 * sizeof(float);
+    sizeof(element<float, multi_vector, C_3> == 8 * sizeof(float);
+\end{verbatim}
+
+Thus, the size of the different elements is optimal, which is a huge performance win.
+
+Unfortunately, because we no longer store the all components in a multivector, we lose the ability to use their array indices directly to do the exclusive or trick. Because of this we also need a new order to store the components for the basis blades an element contains.
+
+Thus, I opted to store the blades in the regular order of appearance. So first we have the scalar, then the basis vectors, then the basis bivectors, etcetera. Of course they are only included if their grade appears in the \verb"GradeList".
+
+\subsection{From Index to Bitwise Representation}
+
+In order to continue to use the exclusive or trick, we need a conversion from optimized-array indices to their bitwise-representation as if they were part of an array containing all components, and vice versa. That way, the body of our geometric product implementation becomes the following:
+\begin{verbatim}
+    r.m_components[to_indexed(to_bitwise(i)
+                            ^ to_bitwise(j))]
+        += sign_table[to_bitwise(i)][to_bitwise(j)]
+        * lhs.m_components[i]
+        * rhs.m_components[j];
+\end{verbatim}
+
+Thus we have two ways of identifying blades. One is called the
+\verb"indexed" representation, and corresponds with the index of a
+basis blade in an array of blades. Note that this index is
+different depending on what blades the multivector contains. The
+index of $e_1$ in a multivector with just a vector in it is zero,
+whereas the index of $e_1$ in a multivector containing a scalar
+and a vector will be one, because the scalar comes first.
+
+The second representation is called the \verb"bitwise"
+representation and has those bits set to one that correspond with
+the basis vector the blade contains. It is this index we can do
+the exclusive or trick with.
+
+\section{A Generic Geometric Product}
+
+Now that we are able to define elements that only store those
+elements needed, we need a geometric product for them. Of course
+we could use the aforementioned code, where we convert between the
+bitwise and indexed representations at runtime. Another option
+would be creating a lookup table to convert between them. However,
+because the conversion depends on gradelists and algebras as well,
+this lookup table could grow too large.
+
+Instead, we should do the conversion at compile time. This is
+possible because the iteration bounds of \verb"i" and \verb"j" are
+known at compile time. However, we cannot use the variables
+\verb"i" and \verb"j" as meta-function parameters directly. For
+example, suppose we have two meta-functions called
+\verb"to_bitwise_repr<>" and \verb"to_indexed_repr<>", then the
+following is not legal C++:
+\begin{verbatim}
+    for (int i = 0; i < N; ++i)
+        int bitwise_repr = to_bitwise_repr<i>::value;
+\end{verbatim}
+This doesn't work because \verb"i" is not a compile time integral
+constant. Thus, if we want to use meta-functions to do the
+conversion, we need the \verb"i" and \verb"j" indices to be
+compile time constants. This is only possible if we unroll the
+loops.
+
+\subsection{Unrolling Loops}
+
+The compile time equivalent of the following code:
+\begin{verbatim}
+    for (int i = 0; i < N; ++i)
+    {
+        do_something();
+    }
+\end{verbatim}
+Would look as follows
+\begin{verbatim}
+    template <int i = 0>
+    void loop(bool_<true> = bool_<true>())
+    {
+        do_something();
+        loop<i + 1>(bool_<(i < N)>());
+    }
+
+    template <int i>
+    void loop(bool_<false>) {}
+\end{verbatim}
+And it would be called as follows:
+\begin{verbatim}
+    loop();
+\end{verbatim}
+Notice how I use function overloading based on two different
+types. The \verb"bool_<true>" version calls the body of the loop
+once, and then calls the function for \verb"i + 1". If \verb"i + 1<N" it calls the \verb"bool_<true>" version again, else it
+calls the \verb"bool_<false>" version, which is an empty
+function.
+
+The \verb"bool_<true>" and \verb"bool_<false>" are simply
+empty classes that any compiler is able to optimize away. The
+reason I use function overloading is because template-functions do
+not support partial template specialization.
+
+\subsection{Dispatching}
+
+This overloading technique to select different pieces of code
+based on meta-function results paves the way for the complete
+implementation of the geometric product. We implement the outer
+loop of the geometric product using the technique above. The
+\verb"do_something" call becomes a call to an \verb"inner_loop"
+function, which uses the same technique.
+
+The body of the inner loop function does the conversion from the
+indexed to the bitwise representation and calculates the resulting
+xor. It then checks whether the target multivector actually has a
+place for the grade of the result, and if so it dispatches based
+on a function that calculates the result of the sign table choice.
+
+Even the sign-table dispatch is not a single function. We could
+have implemented it like this, in pseudo-code:
+\begin{verbatim}
+    template <int i, int j, int result_index>
+    void sign_table()
+    {
+        r[result_index] +=
+            sign_table<i, j>::value * lhs[i] * rhs[i]
+    }
+\end{verbatim}
+Instead, I wrote it like this:
+\begin{verbatim}
+    template <int i, int j, int result_index>
+    void sign_table()
+    {
+        product<i, j, result_index>(
+                int_to_type<sign_table<i, j>::value()
+                                    );
+    }
+
+    template <int i, int j, int result_index>
+    void product(int_to_type<-1>)
+    {
+        r[result_index] -= lhs[i] * rhs[i]
+    }
+
+    template <int i, int j, int result_index>
+    void product(int_to_type<0>) {}
+
+    template <int i, int j, int result_index>
+    void product(int_to_type<1>)
+    {
+        r[result_index] += lhs[i] * rhs[i]
+    }
+\end{verbatim}
+
+Again, notice how we use an overloading technique to select a
+particular piece of code at compile time. Also notice that we
+allow zero-elements in the sign-table. This is useful for
+homogeneous algebras.
+
+\section{The Result}
+
+Using the techniques outlined above, we can write a geometric
+product that allows us to program something like the following:
+\begin{verbatim}
+    vector a;
+    vector b;
+    spinor c = geometric_product<spinor>(a, b);
+\end{verbatim}
+Notice how I specify the return type of the geometric product.
+This is because it is too hard for the compiler to deduce the
+return type for two given multivectors. For a while I have played
+with a compile-time version of the geometric product, that, given
+two gradelists, would return the gradelist of what the result
+would be. This would allow us to write the following:
+\begin{verbatim}
+    template <class Algebra,
+               class GradeListLhs,
+               class GradeListRhs>
+    element<typename
+             compile_time_geom_prod<GradeListLhs,
+                                     GradeListRhs>::type,
+             Algebra>
+    operator * = (const element<GradeListLhs, Algebra& lhs,
+                   const element<GradeListLhs, Algebra& rhs)
+    {
+        ...
+    }
+\end{verbatim}
+Which in turn would allow us to write:
+\begin{verbatim}
+    vector a;
+    vector b;
+    spinor c = a * b;
+\end{verbatim}
+In other words, we could use operator overloading. However, all my
+attempts at writing such a compile-time version of the geometric
+product failed miserably, simply because the algorithm is too
+complicated for most compilers. I hope to be proven wrong in the
+future, either by better compilers coming out, or better
+meta-programming techniques.
+
+Also, very often the client is not interested in the full result
+of a given geometric product. It turns out that in many practical
+situations, we might do a full geometric product yet only need a
+part of the result. For example, we might only be interested in
+the scalar outcome and do this:
+\begin{verbatim}
+    multi_vector a;
+    multi_vector b;
+    scalar f = geometric_product<scalar>(a, b);
+\end{verbatim}
+And the resulting code will only do what's necessary to calculate
+the scalar part of the result.
+
+Admittedly, being able to use operator overloading for the
+geometric product, and possible other products, would have been
+nice. But in this case I had to sacrifice some ease of use for
+performance reasons.
+
+\section{Other Products}
+
+At the heart of geometric algebra is the multivector and its
+associated geometric product. It is well known that all other
+products, like the inner and outer product, can actually be
+written in terms of the geometric product.
+
+Obviously, a first pass at implementing these other products would
+be done in terms of the geometric product. However, a naive
+approach would write the inner product as follows:
+\begin{displaymath}
+    a\cdot b = \frac{1}{2}(ab + ba)
+\end{displaymath}
+Which is obviously not the fastest way to implement this. Thus, I
+decided to write different implementations for different products,
+to make sure they did not do too much.
+
+Interestingly enough, I made an exciting discovery that I have not
+yet seen in other geometric algebra libraries. The theory is
+actually well known, but not always visible explicitly. As it
+turns out, while writing code for the inner and outer product, I
+noticed a lot of code duplication compared to the geometric
+product I had already written. In fact, I noticed that \textbf{all
+products have the same underlying implementation apart from a
+ternary predicate in the inner-most loop}.
+
+Here is some pseudo-code for the geometric product, for clarity in
+runtime terminology, as opposed to compile-time.
+\begin{verbatim}
+    for (int i = 0; i < num_blades_in_lhs; ++i)
+        for (int j = 0; j < num_blades_in_rhs; ++j)
+        {
+            result[i ^ j] = sign[i][j] *
+                              lhs[i] * rhs[j];
+        }
+\end{verbatim}
+Compare this to a possible implementation of the outer product
+\begin{verbatim}
+    for (int i = 0; i < num_blades_in_lhs; ++i)
+        for (int j = 0; j < num_blades_in_rhs; ++j)
+        {
+            if (   num_bits_in(i ^ j)
+                == (num_bits_in(i) + num_bits_in(j))
+            {
+                result[i ^ j] = sign[i][j] * lhs[i] * rhs[j];
+            }
+        }
+\end{verbatim}
+In the bitwise representation (recall that this was pseudo-code,
+in reality things are slightly more complicated, and there are
+conversions from indexed to bitwise representation and back going
+on), the number of bits in the number represents the grade of the
+blade. So, the above code simply does a full geometric product,
+but for each combination of grades of the result, left-hand-side
+and right-hand-side, it checks if the grade of the result is equal
+to the sum of the grade of the left-hand-side and the
+right-hand-side. In other words, we have a ternary predicate over
+the grades of all participants in the product.
+
+We now write a generic product.
+\begin{verbatim}
+    for (int i = 0; i < num_blades_in_lhs; ++i)
+        for (int j = 0; j < num_blades_in_rhs; ++j)
+        {
+            if (predicate(num_bits_in(i ^ j),
+                            num_bits_in(i),
+                            num_bits_in(j)))
+            {
+                result[i ^ j] = sign[i][j] *
+                                  lhs[i] * rhs[j];
+            }
+        }
+\end{verbatim}
+And we write different predicates for the different products. For
+example for the geometric product this would be:
+\begin{verbatim}
+    bool geom_prod_pred(int grade_result,
+                         int grade_lhs,
+                         int grade_rhs)
+    {
+        return true;
+    }
+\end{verbatim}
+We simply return true all the time, because all grade combinations
+participate in a geometric product. A more interesting product is,
+for example, the left contraction:
+\begin{verbatim}
+    bool left_contraction_pred(int grade_result,
+                                int grade_lhs,
+                                int grade_rhs)
+    {
+        return (grade_rhs> grade_lhs)
+            && (grade_result == (grade_rhs - grade_lhs));
+    }
+\end{verbatim}
+The advantage of this scheme is that code-duplication is kept to a
+bare minimum. Adding a new product only involves writing a few
+lines of code. Whereas before I found myself writing lots of
+boiler plate code manually, now I managed to add seven different
+products in only a matter of hours, including the less common
+contractions, Hestenes inner product, fatdot product and scalar
+product.
+
+Perhaps the reason no other libraries use this scheme is because
+using a predicate in an inner-most loop would hurt performance too
+much. This makes much sense, because preferably we don't want to
+be doing conditional statements in our inner-most loop. However,
+recall that we use meta-programming to generate code. This allows
+us to evaluate the predicate at compile-time, and based on its
+result inject code into the final product or not. This means we do
+not pay any overhead at all for this scheme.
+
+\section{Limitations}
+
+Todo: talk about compiler limitations.
+
+\section{Conclusion}
+
+\section{Future Research}
+
+Todo: talk about combining GluCat's strategy with this one.\\
+Todo: talk about Expression Templates. \\
+Todo: talk nkelabout matrix approach
+
+\section{Acknowledgements}
+
+Simon Brown, Patrick Harty, Scott Graham, Dirk Gerrits, Per Vognsen, Nick
+Waanders
+
+\begin{thebibliography}{99}
+
+
+\bibitem{bib:hestenes clifford algebra}
+    David Hestenes and Garret Sobcyk, \emph{Clifford Algebra to Geometric
+    Calculus: A Unified Language for Mathematics and Physisc}, Kluwer Academic
+    Publishing, Dordrecht, 1987
+\bibitem{bib:hestenes new foundations}
+    David Hestenes, \emph{New Foundations For Classical Mechanics},
+    Kluwer Academic Publishing, Dordrecht, 1986
+\bibitem{bib:dorst honing geometric algebra}
+    Leo Dorst, \emph{Honing geometric algebra for its uses in the computer
+    sciences}, http://carol.wins.uva.nl/~leo/clifford/sommer.pdf,
+    published in \emph{Geometric Computing with Clifford Algebras}, ed. G. Sommer,
+    Springer 2001, Section 6, pp. 127-152
+\bibitem{bib:dorst website}
+    Leo Dorst, \emph{Geometric algebra (based on Clifford algebra)},
+    \\http://carol.wins.uva.nl/\~leo/clifford/
+\bibitem{bib:todd velhuizen meta programming}
+    Todd Velhuizen, \emph{Template Meta Programs},
+    \\http://osl.iu.edu/\~tveldhui/papers/Template-Metaprograms/meta-art.html
+\bibitem{bib:boost mpl}
+    Aleksey Gurtovoyi, David Abrahams, Emily Winch, \emph{The Boost Meta
+    Programing library}, http://www.boost.org/libs/mpl/doc/index.html
+\bibitem{bib:modern c++ design}
+    Andrei Alexandrescu, \emph{Modern C++ Design}, Addison Wesley Professional, 2001
+\bibitem{bib:nklein}
+    Patrick Fleckenstein, \emph{C++ Template Classes for Geometric Algebra}, \\
+    http://nklein.com/products/geoma/
+\bibitem{bib:nklein docs}
+    Patrick Fleckenstein, \emph{C++ Template Classes for Geometric Algebra \\
+    Documentation},
+    \\http://nklein.com/products/geoma/geoma1.0.2000.05.17/geoma1.0.2000.05.17.pdf
+\bibitem{bib:clu}
+    Christian Perwass, \emph{The CLU Project}, http://www.perwass.de/cbup/clu.html
+\bibitem{bib:gaigen}
+    Daniel Fontijne, Leo Dorst, Tim Bouma, \emph{Gaigen}, \\
+    http://carol.wins.uva.nl/~fontijne/gaigen/
+\bibitem{bib:clifford}
+    Jaap Suter, \emph{Clifford}, http:://www.jaapsuter.com/
+\bibitem{bib:primer}
+    Jaap Suter, \emph{Geometric Algebra Primer}, http:://www.jaapsuter.com/
+\bibitem{bib:erwin unruh}
+    Erwin Unruh, \emph{Original Metaprogram for Prime Number
+    Computation}, http://www.erwin-unruh.de/primorig.html
+\bibitem{bib:vandevoorde}
+    David Vandevoorde, Nicolai M. Josuttis, \emph{C++ Templates,
+    The Complete Guide}, Addison Wesley, Boston, 2003
+
+\end{thebibliography}
+
+\end{document}

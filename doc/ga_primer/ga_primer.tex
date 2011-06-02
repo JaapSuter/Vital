@@ -1,0 +1,2902 @@
+\documentclass[10pt]{report}
+
+\author{Jaap Suter}
+\title{Geometric Algebra Primer}
+
+\pagestyle{plain}
+
+\usepackage{epsfig}
+\usepackage{color}
+\usepackage{amssymb, amsmath, amsthm}
+\usepackage[dvipdfm]{hyperref}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Adopted with great enthusiasm in physics, geometric algebra slowly
+emerges in computational science. Its elegance and ease of use is
+unparalleled. By introducing two simple concepts, the multivector
+and its geometric product, we obtain an algebra that allows
+subspace arithmetic. It turns out that being able to `calculate'
+with subspaces is extremely powerful, and solves many of the hacks
+required by traditional methods. This paper provides an
+introduction to geometric algebra. The intention is to give the
+reader an understanding of the basic concepts, so advanced
+material becomes more accessible.
+
+\begin{figure}[!b]
+\emph{Copyright \copyright \; 2003 Jaap Suter. Permission to make
+digital or hard copies of part of this work for personal or
+classroom use is granted without fee provided that copies are not
+made or distributed for profit or commercial advantage and that
+copies bear this notice and the full citation. Abstracting with
+credit is permitted. To copy otherwise, to republish, to post on
+servers, or to redistribute to lists, requires prior specific
+permission and/or a fee. Request permission through email at
+clifford@jaapsuter.com. See http://www.jaapsuter.com for more
+information.}
+\end{figure}
+
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+
+\chapter{Introduction}
+
+\section{Rationale}
+
+Information about geometric algebra is widely available in the
+field of physics. Knowledge applicable to computer science,
+graphics in particular, is lacking. As Leo Dorst \cite{bib:dorst
+honing geometric algebra} puts it:
+
+\begin{quotation}
+``\ldots A computer scientist first pointed to geometric algebra
+as a promising way to `do geometry' is likely to find a rather
+confusing collection of material, of which very little is
+experienced as immediately relevant to the kind of geometrical
+problems occurring in practice\ldots
+\\
+\\
+\ldots After perusing some of these, the computer scientist may
+well wonder what all the fuss is about, and decide to stick with
+the old way of doing things \ldots''
+\end{quotation}
+
+And indeed, disappointed by the mathematical obscurity many people
+discard geometric algebra as something for academics only.
+Unfortunately they miss out on the elegance and power that
+geometric algebra has to offer.
+
+Not only does geometric algebra provide us with new ways to reason
+about computational geometry, it also embeds and explains all
+existing theories including complex numbers, quaternions,
+matrix-algebra, and Pl\"uckerspace. Geometric algebra gives us the
+necessary and unifying tools to express geometry and its relations
+without the need for tricks or special cases. Ultimately, it makes
+communicating ideas easier.
+
+\section{Overview}
+
+The layout of the paper is as follows; I start out by talking a
+bit about subspaces, what they are, what we can do with them and
+how traditional vectors or one-dimensional subspaces fit in the
+picture. After that I will define what a geometric algebra is, and
+what the fundamental concepts are. This chapter is the most
+important as all other theory builds upon it. The following
+chapter will introduce some common and handy concepts which I call
+tools. They are not fundamental, but useful in many applications.
+Once we have mastered the fundamentals, and armed with our tools,
+we can tackle some applications of geometric algebra. It is this
+chapter that tries to demonstrate the elegance of geometric
+algebra, and how and where it replaces traditional methods.
+Finally, I wrap things up, and provide a few references and a
+roadmap on how to continue a study of geometric algebra..
+
+\section{Acknowledgements}
+
+I would like to thank David Hestenes for his books
+\cite{bib:hestenes clifford algebra} \cite{bib:hestenes new
+foundations} and papers \cite{bib:hestenes website} and Leo Dorst
+for the papers on his website \cite{bib:dorst website}. Anything
+you learn from this introduction, you indirectly learned from
+them.
+
+My gratitude to Per Vognsen for explaining many of the
+mathematical obscurities that I encountered, and providing me with
+some of the proofs in this paper. Thanks to Kurt Miller, Conor
+Stokes, Patrick Harty, Matt Newport, Willem De Boer, Frank A.
+Krueger and Robert Valkenburg for comments. Finally, I am greatly
+indebted to Dirk Gerrits. His excellent skills as an editor and
+his thorough proofreading allowed me to correct many errors.
+
+\section{Disclaimer}
+
+Of course, any mistakes in this text are entirely mine. I only
+hope to provide an easy-to-read introduction. Proofs will be
+omitted if the required mathematics are beyond the scope of this
+paper. Many times only an example or an intuitive outline will be
+given. I am certain that some of my reasoning won't hold in a
+thorough mathematical review, but at least you should get an
+impression. The enthusiastic reader should pick up some of the
+references to extend his knowledge, learn about some of the
+subtleties and find the actual proofs.
+
+\chapter{Subspaces}
+
+It is often neglected that vectors represent $1$-dimensional
+subspaces. This is mainly due to the fact that it seems the only
+concept at hand. Hence we abuse vectors to form higher-dimensional
+subspaces. We use them to represent planes by defining normals. We
+combine them in strange ways to create oriented subspaces. Some
+papers even mention quaternions as vectors on a $4$-dimensional
+unit hypersphere.
+
+For no apparent reason we have been denying the existence of $2$-,
+$3$- and higher-dimensional subspaces as simple concepts, similar
+to the vector. Geometric algebra introduces these and even defines
+the operators to perform arithmetic with them. Using geometric
+algebra we can finally represent planes as true $2$-dimensional
+subspaces, define oriented subspaces, and reveal the true identity
+of quaternions. We can add and subtract subspaces of different
+dimensions, and even multiply and divide them, resulting in
+powerful expressions that can express any geometric relation or
+concept.
+
+This chapter will demonstrate how vectors represent
+$1$-dimensional subspaces and uses this knowledge to express
+subspaces of arbitrary dimensions. However, before we get to that,
+let us consider the very basics by using a familiar example.
+
+\begin{figure}[ht]
+\centering
+\input{dotproduct.pstex_t}
+\caption{The dot product} \label{fig:dot product}
+\end{figure}
+
+What if we project a $1$-dimensional subspace onto another? The
+answer is well known; For vectors $a$ and $b$, the dot product
+$a\cdot b$ projects $a$ onto $b$ resulting in the scalar magnitude
+of the projection relative to $b$'s magnitude. This is depicted in
+figure \ref{fig:dot product} for the case where $b$ is a unit
+vector.
+
+Scalars can be treated as $0$-dimensional subspaces. Thus, the
+projection of a $1$-dimensional subspace onto another results in a
+$0$-dimensional subspace.
+
+\section{Bivectors}
+
+Geometric algebra introduces an operator that is in some ways the
+opposite of the dot product. It is called the outer product and
+instead of projecting a vector onto another, it extends a vector
+along another. The $\wedge$ (wedge) symbol is used to denote this
+operator. Given two vectors $a$ and $b$, the outer product
+$a\wedge b$ is depicted in figure \ref{fig:outer_product_a}.
+
+\begin{figure}[ht]
+\centering
+\input{outerproduct_a.pstex_t}
+\caption{Vector $a$ extended along vector $b$}
+\label{fig:outer_product_a}
+\end{figure}
+
+The resulting entity is a $2$-dimensional subspace, and we call it
+a bivector. It has an area equal to the size of the parallelogram
+spanned by $a$ and $b$ and an orientation depicted by the
+clockwise arc. Note that a bivector has no shape. Using a
+parallelogram to visualize the area provides an intuitive way of
+understanding, but a bivector is just an oriented area, in the
+same way a vector is just an oriented length.
+
+\begin{figure}[ht]
+\centering
+\input{outerproduct_b.pstex_t}
+\caption{Vector $b$ extended along vector $a$}
+\label{fig:outer_product_b}
+\end{figure}
+
+If $b$ were extended along $a$ the result would be a bivector with
+the same area but an opposite (ie. counter-clockwise) orientation,
+as shown in figure \ref{fig:outer_product_b}. In mathematical
+terms; the outer product is anticommutative, which means that:
+\begin{equation}
+\label{eq:outer prod anticommutative}
+    a\wedge b = -b\wedge a
+\end{equation}
+With the consequence that:
+\begin{equation}
+\label{eq:outer prod self zero}
+    a\wedge a = 0
+\end{equation}
+which makes sense if you consider that $a\wedge a = -a\wedge a$
+and only $0$ equals its own negation (0 = -0). The geometrical
+interpretation is a vector extended along itself. Obviously the
+resulting bivector will have no area.
+
+Some other interesting properties of the outer product are:
+\begin{align}
+(\lambda a)\wedge b &= \lambda(a\wedge b)        && \text{\emph{associative scalar multiplication}}      \label{eq:outer prod linear with scalar} \\
+\lambda (a\wedge b) &= (a\wedge b)\lambda        && \text{\emph{commutative scalar multiplication}} \label{eq:outer prod commutativity with scalar} \\
+a\wedge (b+c)       &= (a\wedge b) + (a\wedge c) && \text{\emph{distributive over vector addition}} \label{eq:outer prod distributivity over add}
+\end{align}
+For vectors $a$, $b$ and $c$ and scalar $\lambda$. Drawing a few
+simple sketches should convince you, otherwise most of the
+references provide proofs.
+
+\subsection{The Euclidian Plane}
+
+Given an $n$-dimensional vector $a$ there is no way to visualize
+it until we see a decomposition onto a basis $(e_1, e_2, ...
+e_n)$. In other words, we express $a$ as a linear combination of
+the basis vectors $e_i$. This allows us to write $a$ as an n-tuple
+of real numbers, e.g. $(x, y)$ in two dimensions, $(x, y, z)$ in
+three, etcetera. Bivectors are much alike; they can be expressed
+as linear combinations of basis bivectors.
+
+To illustrate, consider two vectors $a$ and $b$ in the Euclidian
+Plane $\mathbb{R}^2$. Figure \ref{fig:2d_basis} depicts the real
+number decomposition $a = (\alpha_{1}, \alpha_{2})$ and $b =
+(\beta_{1}, \beta_{2})$ onto the basis vectors $e_1$ and $e_2$.
+
+\begin{figure}[ht]
+\centering
+\input{2d_basis.pstex_t}
+\caption{A two dimensional basis} \label{fig:2d_basis}
+\end{figure}
+
+Written down, this decomposition looks as follows:
+\begin{align}
+    a = \alpha_{1}e_{1} + \alpha_{2}e_{2} \nonumber \\
+    b = \beta_{1}e_{1}  + \beta_{2}e_{2}  \nonumber
+\end{align}
+The outer product of $a$ and $b$ becomes:
+\begin{displaymath}
+    a\wedge b = (\alpha_{1}e_{1} + \alpha_{2}e_{2})\wedge (\beta_{1}e_{1} + \beta_{2}e_{2})
+\end{displaymath}
+Using (\ref{eq:outer prod distributivity over add}) we may rewrite
+the above to:
+\begin{align}
+    a\wedge b = &(\alpha_{1}e_{1}\wedge \beta_{1}e_{1}) + \nonumber\\
+                &(\alpha_{1}e_{1}\wedge \beta_{2}e_{2}) + \nonumber\\
+                &(\alpha_{2}e_{2}\wedge \beta_{1}e_{1}) + \nonumber\\
+                &(\alpha_{2}e_{2}\wedge \beta_{2}e_{2})   \nonumber
+\end{align}
+Equation (\ref{eq:outer prod linear with scalar}) and
+(\ref{eq:outer prod commutativity with scalar}) tell us we may
+reorder the scalar multiplications to obtain:
+\begin{align}
+    a\wedge b = &(\alpha_{1}\beta_{1}e_{1}\wedge e_{1}) + \nonumber\\
+                &(\alpha_{1}\beta_{2}e_{1}\wedge e_{2}) + \nonumber\\
+                &(\alpha_{2}\beta_{1}e_{2}\wedge e_{1}) + \nonumber\\
+                &(\alpha_{2}\beta_{2}e_{2}\wedge e_{2})   \nonumber
+\end{align}
+Now, recall equation (\ref{eq:outer prod self zero}) which says
+that the outer product of a vector with itself equals zero. Thus
+we are left with:
+\begin{align}
+    a\wedge b = &(\alpha_{1}\beta_{2}e_{1}\wedge e_{2}) + \nonumber\\
+                &(\alpha_{2}\beta_{1}e_{2}\wedge e_{1})   \nonumber
+\end{align}
+Now take another look at figure \ref{fig:2d_basis}. There, $I$
+represents the outer product $e_{1}\wedge e_{2}$. This will be our
+choice for the basis bivector. Because of (\ref{eq:outer prod
+anticommutative}) this means that $e_{2}\wedge e_{1} = -I$. Using
+this information in the previous equation, we obtain:
+\begin{equation}
+    \label{eq:2d outer prod}
+    a\wedge b = (\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})I
+\end{equation}
+Which is how to calculate the outer product of two vectors $a =
+(\alpha_{1}, \alpha_{2})$ and $b = (\beta_{1}, \beta_{2})$. Thus,
+in two dimensions, we express bivectors in terms of a basis
+bivector called $I$. In the Euclidian plane we use $I$ to
+represent $e_{12} = e_1 \wedge e_2$.
+
+\newpage
+\subsection{Three Dimensions}
+
+In $3$-dimensional space $\mathbb{R}^3$, things become more
+complicated. Now, the orthogonal basis consists of three vectors:
+$e_{1}$, $e_{2}$, and $e_{3}$. As a result, there are three basis
+bivectors. These are $e_{1}\wedge e_{2} = e_{12}$, $e_{1}\wedge
+e_{3} = e_{13}$, and $e_{2}\wedge e_{3} = e_{23}$, as depicted in
+figure \ref{fig:3d_bi_basis}.
+\begin{figure}[ht]
+\centering
+\input{3d_bi_basis.pstex_t}
+\caption{A $3$-dimensional bivector basis} \label{fig:3d_bi_basis}
+\end{figure}\\
+
+It is worth noticing that the choice between using either $e_{ij}$
+or $e_{ji}$ as a basis bivector is completely arbitrary. Some
+people prefer to use $\{e_{12}, e_{23}, e_{31}\}$ because it is
+cyclic, but this argument breaks down in four dimensions or
+higher; e.g. try making $\{e_{12}, e_{13}, e_{14}, e_{23}, e_{24},
+e_{34} \}$ cyclic. I use $\{e_{12}, e_{13}, e_{23}\}$ because it
+solves some issues \cite{bib:suter c++
+implementation} in computational geometric algebra
+implementations.
+
+The outer product of two vectors will result in a linear
+combination of the three basis bivectors. I will demonstrate this
+by using two vectors $a$ and $b$:
+\begin{align}
+    a = \alpha_{1}e_{1} + \alpha_{2}e_{2} + \alpha_{3}e_{3} \nonumber \\
+    b = \beta_{1}e_{1}  + \beta_{2}e_{2} + \alpha_{3}e_{3}  \nonumber
+\end{align}
+The outer product $a\wedge b$ becomes:
+\begin{displaymath}
+    a\wedge b = (\alpha_{1}e_{1} + \alpha_{2}e_{2} + \alpha_{3}e_{3})\wedge(\beta_{1}e_{1}  + \beta_{2}e_{2} + \beta_{3}e_{3})
+\end{displaymath}
+Using the same rewrite rules as in the previous section, we may
+rewrite this to:
+\begin{align}
+    a\wedge b = &\alpha_{1}e_{1}\wedge \beta_{1}e_{1} + \alpha_{1}e_{1}\wedge \beta_{2}e_{2} + \alpha_{1}e_{1}\wedge \beta_{3}e_{3} + \nonumber \\
+                &\alpha_{2}e_{2}\wedge \beta_{1}e_{1} + \alpha_{2}e_{2}\wedge \beta_{2}e_{2} + \alpha_{2}e_{2}\wedge \beta_{3}e_{3} + \nonumber \\
+                &\alpha_{3}e_{3}\wedge \beta_{1}e_{1} + \alpha_{3}e_{3}\wedge \beta_{2}e_{2} + \alpha_{3}e_{3}\wedge \beta_{3}e_{3}   \nonumber
+\end{align}
+And reordering scalar multiplication:
+\begin{align}
+    a\wedge b = &\alpha_{1}\beta_{1}e_{1}\wedge e_{1} + \alpha_{1}\beta_{2}e_{1}\wedge e_{2} + \alpha_{1}\beta_{3}e_{1}\wedge e_{3} + \nonumber \\
+                &\alpha_{2}\beta_{1}e_{2}\wedge e_{1} + \alpha_{2}\beta_{2}e_{2}\wedge e_{2} + \alpha_{2}\beta_{3}e_{2}\wedge e_{3} + \nonumber \\
+                &\alpha_{3}\beta_{1}e_{3}\wedge e_{1} + \alpha_{3}\beta_{2}e_{3}\wedge e_{2} + \alpha_{3}\beta_{3}e_{3}\wedge e_{3}   \nonumber
+\end{align}
+Recalling equations (\ref{eq:outer prod anticommutative}) and
+(\ref{eq:outer prod self zero}), we have the following rules for
+$i \neq j$:
+\begin{align}
+    e_{i}\wedge e_{i} &= 0         \nonumber && \text{\emph{outer product with self is zero}}\\
+    e_{i}\wedge e_{j} &= e_{ij}    \nonumber && \text{\emph{outer product of basis vectors equals basis bivector}}\\
+    e_{j}\wedge e_{i} &= -e_{ij}   \nonumber && \text{\emph{anticommutative}}
+\end{align}
+Using this, we can rewrite the above to the following:
+\begin{align}
+    \label{eq:wedge in 3d}
+    a\wedge b = (\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_{12} +
+                (\alpha_{1}\beta_{3} - \alpha_{3}\beta_{1})e_{13} +
+                (\alpha_{2}\beta_{3} - \alpha_{3}\beta_{2})e_{23}
+\end{align}
+which is the outer product of two vectors in $3$-dimensional
+Euclidian space.
+
+For some, this looks remarkably like the definition of the cross
+product. But they are not the same. The outer product works in all
+dimensions, whereas the cross product is only defined in three
+dimensions.\footnote{Some cross product definitions are valid in
+all spaces with uneven dimension.} Furthermore, the cross product
+calculates a perpendicular subspace instead of a parallel one.
+Later we will see why this causes problems in certain
+situations\footnote{If you ever tried transforming a plane, you
+will remember that you had to use an inverse of a transposed
+matrix to transform the normal of the plane.} and how the outer
+product solves these.
+
+\newpage
+\section{Trivectors} Until now, we have been using the outer
+product as an operator of two vectors. The outer product extended
+a $1$-dimensional subspace along another to create a
+$2$-dimensional subspace. What if we extend a $2$-dimensional
+subspace along a $1$-dimensional one?
+
+If $a$, $b$ and $c$ are vectors, then what is the result of
+$(a\wedge b)\wedge c$? Intuition tells us this should result in a
+$3$-dimensional subspace, which is correct and illustrated in
+figure \ref{fig:trivector}.
+
+\begin{figure}[ht]
+\centering
+\input{trivector.pstex_t}
+\caption{A Trivector} \label{fig:trivector}
+\end{figure}
+
+A bivector extended by a third vector results in a directed volume
+element. We call this a trivector. Note that, like bivectors, a
+trivector has no shape; only volume and sign. Even though a box
+helps to understand the nature of trivectors intuitively, it could
+have been any shape.
+
+In $3$-dimensional Euclidian space $\mathbb{R}^3$, there is one
+basis trivector equal to $e_{1}\wedge e_{2}\wedge e_{3} =
+e_{123}$. Sometimes, in Euclidian space, this trivector is called
+$I$. We already saw this symbol being used for $e_{12}$ in the
+Euclidian plane, and we'll return to it when we discuss
+pseudo-scalars.
+
+The result of the outer product of three arbitrary vectors results
+in a scalar multiple of this basis trivector. In $4$-dimensional
+space $\mathbb{R}^4$, there are four basis trivectors $e_{123}$,
+$e_{124}$, $e_{134}$, and $e_{234}$, and consequently an arbitrary
+trivector will be a linear combination of these four basis
+trivectors. But what about the Euclidian Plane? Obviously, there
+can be no $3$-dimensional subspaces in a $2$-dimensional space
+$\mathbb{R}^2$. The following informal proof demonstrates why
+trivectors do not exist in two dimensions.
+
+We need to show that for arbitrary vectors $a$, $b$, and $c \in
+\mathbb{R}^2$ the following holds:
+\begin{displaymath}
+    (a\wedge b)\wedge c = 0
+\end{displaymath}
+Again, we will decompose the vectors onto the basis vectors, using
+real numbers $(\alpha_1, \alpha_2)$, $(\beta_1, \beta_2)$, and
+$(\gamma_1, \gamma_2)$:
+\begin{eqnarray}
+ a = \alpha_1 e_1 + \alpha_2 e_2 \nonumber \\
+ b = \beta_1 e_1  + \beta_2 e_2  \nonumber \\
+ c = \gamma_1 e_1 + \gamma_2 e_2 \nonumber
+\end{eqnarray}
+Using equation (\ref{eq:2d outer prod}), we may write:
+\begin{displaymath}
+(a\wedge b)\wedge c = ((\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_1\wedge e_2)\wedge (\gamma_1 e_1 + \gamma_2 e_2)
+\end{displaymath}
+We can rewrite this to:
+\begin{displaymath}
+((\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_1\wedge e_2)\wedge (\gamma_1 e_1) + ((\alpha_{1}\beta_{2}-\alpha_{2}\beta_{1})e_1\wedge e_2)\wedge (\gamma_2 e_2)
+\end{displaymath}
+Which becomes:
+\begin{displaymath}
+(\gamma_1(\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_1\wedge
+e_2\wedge e_1) + (\gamma_2(\alpha_{1}\beta_{2}
+-\alpha_{2}\beta_{1})e_1\wedge e_2\wedge e_2)
+\end{displaymath}
+The scalar parts are not really important. Take a good look at the
+outer product of the basis vectors. We have:
+\begin{displaymath}
+e_1\wedge e_2\wedge e_1\mbox{, and } e_1\wedge e_2\wedge e_2
+\end{displaymath}
+Because the outer product is anticommutative (equation
+(\ref{eq:outer prod anticommutative})), we may rewrite the first
+one:
+\begin{displaymath}
+-e_1\wedge e_1\wedge e_2\mbox{, and } e_1\wedge e_2\wedge e_2
+\end{displaymath}
+And using equation (\ref{eq:outer prod self zero}) which says that
+the outer product of a vector with itself equals zero, we are left
+with:
+\begin{displaymath}
+-0\wedge e_2\mbox{, and } e_1\wedge 0
+\end{displaymath}
+
+From here, it does not take much to realize that the outer product
+of a vector and the null vector results in zero. I'll come back to
+a more formal treatment of null vectors later, but for now it
+should be enough to understand that if we extend a vector by a
+vector that has no length, we are left with zero area. Thus we
+conclude that $a\wedge b\wedge c =0$ in $\mathbb{R}^2$.
+
+\newpage
+
+\section{Blades}
+
+So far we have seen scalars, vectors, bivectors and trivectors
+representing $0$-, $1$-, $2$- and $3$-dimensional subspaces
+respectively. Nothing stops us from generalizing all of the above
+to allow subspaces with arbitrary dimension.
+
+Therefore, we introduce the term $k$-blades, where $k$ refers to
+the dimension of the subspace the blade spans. The number $k$ is
+called the grade of a blade. Scalars are $0$-blades, vectors are
+$1$-blades, bivectors are $2$-blades, and trivectors are
+$3$-blades. In other words, the grade of a vector is one, and the
+grade of a trivector is three. In higher dimensional spaces there
+can be $4$-blades, $5$-blades, or even higher. As we have shown
+for $n=2$ in the previous section, in an $n$-dimensional space the
+$n$-blade is the blade with the highest grade.
+
+Recall how we expressed vectors as a linear combination of basis
+vectors and bivectors as a linear combination of basis bivectors.
+It turns out that every $k$-blade can be decomposed onto a set of
+basis $k$-blades. The following tables contain all the basis
+blades for subspaces of dimensions $2$, $3$ and $4$.
+
+\begin{figure}[ht]
+\begin{center}
+\begin{tabular}{|l|l|c|}
+  \hline
+  % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+  $k$ & basis $k$-blades & total \\
+  \hline
+  $0$-blades (scalars) & $\{1\}$ & $1$ \\
+  $1$-blades (vectors) & $\{e_{1}, e_{2}\}$ & $2$ \\
+  $2$-blades (bivectors) & $\{e_{12}\}$ & $1$ \\
+  \hline
+\end{tabular}\\
+\end{center}
+\label{tab:Basis blades in $2$ dimensions}
+\caption{Basis blades in $2$ dimensions}
+\end{figure}
+%---------------------------------------------------------------------------------
+\begin{figure}[ht]
+\begin{center}
+\begin{tabular}{|l|l|c|}
+  \hline
+  % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+  $k$ & basis $k$-blades & total \\
+  \hline
+  $0$-blades (scalars) & $\{1\}$ & $1$ \\
+  $1$-blades (vectors) & $\{e_{1}, e_{2}, e_{3}\}$ & $3$ \\
+  $2$-blades (bivectors) & $\{e_{12}, e_{13}, e_{23}\}$ & $3$ \\
+  $3$-blades (trivectors) & $\{e_{123}\}$ & $1$ \\
+  \hline
+\end{tabular}\\
+\end{center}
+\label{tab:Basis blades in $3$ dimensions}
+\caption{Basis blades in $3$ dimensions}
+\end{figure}
+%---------------------------------------------------------------------------------
+\begin{figure}[ht]
+\begin{center}
+\begin{tabular}{|l|l|c|}
+  \hline
+  % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+  $k$ & basis $k$-blades & total \\
+  \hline
+  $0$-blades (scalars) & $\{1\}$ & $1$ \\
+  $1$-blades (vectors) & $\{e_{1}, e_{2}, e_{3}, e_{4}\}$ & $4$ \\
+  $2$-blades (bivectors) & $\{e_{12}, e_{13}, e_{14}, e_{23}, e_{24}, e_{34}\}$ & $6$ \\
+  $3$-blades (trivectors) & $\{e_{123}, e_{124}, e_{134}, e_{234}\}$ & $4$ \\
+  $4$-blades & $\{e_{1234}\}$ & $1$ \\
+  \hline
+\end{tabular}\\
+\end{center}
+\label{tab:Basis blades in $4$ dimensions}
+\caption{Basis blades in $4$ dimensions}
+\end{figure}
+
+Generalizing this; how many basis $k$-blades are needed in an
+$n$-dimensional space to represent arbitrary $k$-blades? It turns
+out that the answer lies in the binomial coefficient:
+\begin{displaymath}
+    \label{eq:num basis blades for grade}
+    \binom{n}{k} = \frac{n!}{(n-k)!k!}
+\end{displaymath}
+
+This is because a basis $k$-blade is uniquely determined by the
+$k$ basis vectors from which it is constructed. There are $n$
+different basis vectors in total. $\binom{n}{k}$ is the number of
+ways to choose $k$ elements from a set of $n$ elements and thus it
+is easily seen that the number of basis $k$-blades is equal to
+$\binom{n}{k}$.
+
+Here are a few examples which you can compare to the tables above.
+The number of basis bivectors or $2$-blades in $3$-dimensional
+space is:
+\begin{displaymath}
+    \binom{3}{2} = \frac{3!}{(3-2)!2!}= 3
+\end{displaymath}
+The number of basis trivectors or $3$-blades in $3$-dimensional
+space equals:
+\begin{displaymath}
+    \binom{3}{3}= \frac{3!}{(3-3)!3!}= 1
+\end{displaymath}
+The number of basis bivectors or $2$-blades in $4$-dimensional
+space is:
+\begin{displaymath}
+    \binom{4}{2} = \frac{4!}{(4-2)!2!}= 6
+\end{displaymath}
+
+\chapter{Geometric Algebra}
+
+All spaces $\mathbb{R}^n$ generate a set of basis blades that make
+up a \emph{Geometric Algebra} of subspaces, denoted by
+$\mathcal{C}\ell_n$.\footnote{The reason we use
+$\mathcal{C}\ell_n$ is because geometric algebra is based on the
+theory of Clifford Algebras, a topic within mathematics beyond the
+scope of this paper} For example, a possible basis for
+$\mathcal{C}\ell_2$ is:
+\begin{displaymath}
+    \{\underbrace{1}_{basis\;scalar}, \underbrace{e_{1},\;e_{2}}_{basis\;vectors}, \underbrace{I}_{basis\;bivector}\}
+\end{displaymath}
+Here, $1$ is used to denote the basis $0$-blade or scalar-basis.
+Every element of the geometric algebra $\mathcal{C}\ell_2$ can be
+expressed as a linear combination of these basis blades. Another
+example is a basis of $\mathcal{C}\ell_3$ which could be:
+\begin{displaymath}
+    \{  \underbrace{1}_{basis\;scalar},
+        \underbrace{e_{1},\;e_{2},\;e_{3}}_{basis\;vectors},\;\;\;
+        \underbrace{e_{12},\;e_{13},\;e_{23}}_{basis\;bivectors}\,
+        \underbrace{e_{123}}_{basis\;trivector}
+    \}
+\end{displaymath}
+The total number of basis blades for an algebra can be calculated
+by adding the numbers required for all basis $k$-blades:
+\begin{equation}
+    \label{eq:total_num_basis_blades}
+    \sum_{k=0}^{n}\binom{n}{k} = 2^n
+\end{equation}
+The proof relies on some combinatorial mathematics and can be
+found in many places. You can use the following table to check the
+formula for a few simple geometric algebras.
+\begin{center}
+\begin{tabular}{|c|l|c|}
+  \hline
+  $\mathcal{C}\ell_{n}$ & basis blades & total \\
+  \hline
+  $\mathcal{C}\ell_{0}$ & $\{ 1 \}$ & $2^{0} = 1$ \\
+  $\mathcal{C}\ell_{1}$ & $\{ 1; e_{1} \}$ & $2^{1} = 2$ \\
+  $\mathcal{C}\ell_{2}$ & $\{ 1; e_{1}, e_{2}; e_{12} \}$ & $2^{2} = 4$ \\
+  $\mathcal{C}\ell_{3}$ & $\{ 1; e_{1}, e_{2}, e_{3}; e_{12}, e_{13}, e_{23}; e_{123} \}$ & $2^{3} = 8$ \\
+  $\mathcal{C}\ell_{4}$ & $\{ 1; e_{1}, e_{2}, e_{3}, e_{4}; e_{12}, e_{13}, e_{14}, e_{23}, e_{24}, e_{34}; e_{123}, e_{124}, e_{134}, e_{234}; e_{1234} \}$ & $2^{4} = 16$ \\
+  \hline
+\end{tabular}
+\end{center}
+
+\section{The Geometric Product}
+Until now we have only used the outer product. If we combine the
+outer product with the familiar dot product we obtain the
+geometric product. For arbitrary vectors $a$, $b$ the geometric
+product can be calculated as follows:
+\begin{eqnarray}
+            ab = a\cdot b + a\wedge b
+            \label{eq:geometric_product_vectors}
+\end{eqnarray}
+
+Wait, how is that possible? The dot product results in a scalar,
+and the outer product in a bivector. How does one add a scalar to
+a bivector?
+
+Like complex numbers, we keep the two entities separated. The
+complex number $(3 + 4i)$ consists of a real and imaginary part.
+Likewise, $ab = a\cdot b + a\wedge b$ consists of a scalar and a
+bivector part. Such combinations of blades are called
+multivectors.
+
+\section{Multivectors}
+A multivector is a linear combination of different $k$-blades. In
+$\mathbb{R}^2$ it will contain a scalar part, a vector part and a
+bivector part:
+\begin{displaymath}
+    \underbrace{\alpha_1}_{scalar\;part} + \;\;\underbrace{\alpha_2 e_1 +\alpha_3 e_2}_{vector\;part}\;\; + \underbrace{\alpha_4 I}_{bivector\;part}
+\end{displaymath}
+Where $\alpha_i$ are real numbers, e.g. the components of the
+multivector. Note that $\alpha_i$ can be zero, which means that
+blades are multivectors as well. For example, if $a_{1}$ and
+$a_{4}$ are zero, we have a vector or $1$-blade.
+
+In $\mathbb{R}^2$ we need $2^2 = 4$ real numbers to denote a full
+multivector. A multivector in $\mathbb{R}^3$ can be defined with
+$2^3 = 8$ real numbers and will look like this:
+\begin{displaymath}
+    \underbrace{\alpha_1}_{scalar\;part} + \;\;
+    \underbrace{\alpha_2 e_1 +\alpha_3 e_2 +\alpha_4 e_3}_{vector\;part}\;\; +
+    \underbrace{\alpha_5 e_{12} +\alpha_6 e_{13} +\alpha_7 e_{23}}_{bivector\;part}\;\; +
+    \underbrace{\alpha_8 e_{123}}_{trivector\;part}
+\end{displaymath}
+In the same way, a multivector in $\mathbb{R}^4$ will have $2^4 =
+16$ components.
+
+Unfortunately, multivectors can't be visualized easily. Vectors,
+bivectors and trivectors have intuitive visualizations in $2$- and
+$3$-dimensional space. Multivectors lack this way of thinking,
+because we have no way to visualize a scalar added to an area.
+However, we get something much more powerful than easy
+visualization. A multivector, as a linear combination of
+subspaces, turns out to be extremely expressive, and can be used
+to convey many different concepts in geometry.
+
+\section{The Geometric Product Continued}
+
+The generalized geometric product is an operator for multivectors.
+It has the following properties:
+\begin{align}
+(AB)C     &= A(BC) && \text{\emph{associativity}} \label{eq:geom prod associative} \\
+\lambda A &= A\lambda && \text{\emph{commutative scalar multiplication}} \label{eq:geom prod commutative}\\
+A(B+C)    &= AB + AC && \text{\emph{distributive over
+addition}\label{eq:geom prod distributive}}
+\end{align}
+For arbitrary multivectors $A$, $B$ and $C$, and scalar $\lambda$.
+Proofs for the other properties are beyond the scope of this
+paper. They are not difficult per se, but it is mostly formal
+algebra even though all of the above intuitively feel right
+already. The interested reader should pick up some of the
+references for more information.
+
+Note that the geometric product is, in general, not commutative:
+\begin{displaymath}
+AB \neq BA
+\end{displaymath}
+Nor is it anticommutative. This is a direct consequence of the
+fact that the anticommutative outer product and the commutative
+dot product are both part of the geometric product.
+
+We have seen the geometric product for vectors using the dot
+product and the outer product. However, since the dot product is
+only defined for vectors, and the outer product only for blades,
+we need something different for multivectors.
+
+Consider two arbitrary multivectors $A$ and $B$ from
+$\mathcal{C}\ell_2$.
+\begin{align}
+    A &= \alpha_1 + \alpha_2 e_1 +\alpha_3 e_2 + \alpha_4 I \nonumber \\
+    B &= \beta_1 + \beta_2 e_1 + \beta_3 e_2 + \beta_4 I    \nonumber
+\end{align}
+Multiplying A and B using the geometric product, we get:
+\begin{align}
+    AB &= (\alpha_1 + \alpha_2 e_1 +\alpha_3 e_2 + \alpha_4 I)B \nonumber
+\end{align}
+Using equation (\ref{eq:geom prod distributive}) we may rewrite
+this to:
+\begin{align}
+    AB &= \alpha_1 B + \alpha_2 e_1 B + \alpha_3 e_2 B + \alpha_4 I B \nonumber
+\end{align}
+Now writing out B:
+\begin{alignat}{2}
+    AB &= (\alpha_1     &(\beta_1 + \beta_2 e_1 + \beta_3 e_2 + \beta_4 I))   \nonumber\\
+       &+ (\alpha_2 e_1 &(\beta_1 + \beta_2 e_1 + \beta_3 e_2 + \beta_4 I))   \nonumber\\
+       &+ (\alpha_3 e_2 &(\beta_1 + \beta_2 e_1 + \beta_3 e_2 + \beta_4 I))   \nonumber\\
+       &+ (\alpha_4 I   &(\beta_1 + \beta_2 e_1 + \beta_3 e_2 + \beta_4 I))   \nonumber
+\end{alignat}
+And this can be rewritten to:
+\begin{alignat}{6}
+    AB &= \alpha_1 \beta_1     &&+\alpha_1     \beta_2 e_1 &&+ \alpha_1     \beta_3 e_2 &&+ \alpha_1     \beta_4 I \nonumber\\
+       &+ \alpha_2 e_1 \beta_1 &&+\alpha_2 e_1 \beta_2 e_1 &&+ \alpha_2 e_1 \beta_3 e_2 &&+ \alpha_2 e_1 \beta_4 I \nonumber\\
+       &+ \alpha_3 e_2 \beta_1 &&+\alpha_3 e_2 \beta_2 e_1 &&+ \alpha_3 e_2 \beta_3 e_2 &&+ \alpha_3 e_2 \beta_4 I \nonumber\\
+       &+ \alpha_4 I   \beta_1 &&+\alpha_4 I   \beta_2 e_1 &&+ \alpha_4 I   \beta_3 e_2 &&+ \alpha_4 I   \beta_4 I \nonumber
+\end{alignat}
+And in the same way as we did when we wrote out the outer product,
+we may reorder the scalar multiplications (\ref{eq:geom prod
+commutative}) to obtain:
+\begin{alignat}{6}
+    \label{eq:full_geomprod_2d}
+    AB &= \alpha_1 \beta_1     &&+\alpha_1 \beta_2      e_1 &&+ \alpha_1 \beta_3     e_2 &&+ \alpha_1 \beta_4     I \\
+       &+ \alpha_2 \beta_1 e_1 &&+\alpha_2 \beta_2  e_1 e_1 &&+ \alpha_2 \beta_3 e_1 e_2 &&+ \alpha_2 \beta_4 e_1 I \nonumber\\
+       &+ \alpha_3 \beta_1 e_2 &&+\alpha_3 \beta_2  e_2 e_1 &&+ \alpha_3 \beta_3 e_2 e_2 &&+ \alpha_3 \beta_4 e_2 I \nonumber\\
+       &+ \alpha_4 \beta_1 I   &&+\alpha_4 \beta_2  I   e_1 &&+ \alpha_4 \beta_3 I   e_2 &&+ \alpha_4 \beta_4 I   I \nonumber
+\end{alignat}
+
+This looks like a monster of a calculation at first. But if you
+study it for a while, you will notice that it is fairly
+structured. The resulting equation demonstrates that we can
+express the geometric product of arbitrary multivectors as a
+linear combination of geometric products of basis blades.
+
+So what we need, is to understand how to calculate geometric
+products of basis blades. Let's look at a few different
+combinations. For example, using equation
+(\ref{eq:geometric_product_vectors}) we can write:
+\begin{displaymath}
+  e_1e_1 = e_1\cdot e_1 + e_1\wedge e_1
+\end{displaymath}
+But remember from equation (\ref{eq:outer prod self zero}) that $a
+\wedge a = 0$ because it has no area. Also, the dot product of a
+vector with itself is equal to its squared magnitude. If we choose
+the magnitude of the basis vectors $e_1$, $e_2$, etc. to be $1$,
+we may simplify the above to:
+\begin{alignat}{2}
+  e_1e_1 &= e_1\cdot e_1 &+& e_1\wedge e_1   \nonumber \\
+         &= e_1\cdot e_1 &+& 0               \nonumber \\
+         &= 1 &+& 0                          \nonumber \\
+         &= 1 &                              \nonumber
+\end{alignat}
+Another example is, again in $\mathcal{C}\ell_2$:
+\begin{displaymath}
+    e_1e_2 = e_1\cdot e_2 + e_1\wedge e_2
+\end{displaymath}
+Now remember that $e_1$ is perpendicular to $e_2$ so the dot
+product $e_1 \cdot e_2 = 0$. This leaves us with:
+\begin{alignat}{2}
+  e_1e_2 &= e_1\cdot e_2 &+& e_1\wedge e_2   \nonumber \\
+         &= 0 &+& e_1\wedge e_2              \nonumber \\
+         &= 0 &+& I                          \nonumber \\
+         &= I &                              \nonumber
+\end{alignat}
+
+A more complicated example involves the geometric product of
+$e_{1}$ and $I$. The previous example showed us that $I = e_{12}$
+is equal to $e_1e_2$. We can use this and equation (\ref{eq:geom
+prod associative}) to write:
+\begin{alignat}{1}
+    e_1I &= e_1e_{12}                       \nonumber \\
+         &= e_1(e_1e_2)                     \nonumber \\
+         &= (e_1e_1)e_2                     \nonumber \\
+         &= 1e_2                            \nonumber \\
+         &= e_2                             \nonumber
+\end{alignat}
+
+You might begin to see a pattern. Because the basis blades are
+perpendicular, the dot and outer product have trivial results. We
+use this to simplify the result of a geometric product with a few
+rules.
+
+\begin{enumerate}
+    \item
+        Basis blades with grades higher than one (bivectors, trivectors,
+        $4$-blades, etc.) can be written as an outer product of
+        perpendicular vectors. Because of this, their dot product equals
+        zero, and consequently, we can write them as a geometric product of
+        vectors. For example, in some high dimensional space, we could
+        write:
+        \begin{displaymath}
+            e_{12849} = e_1\wedge e_2\wedge e_8\wedge e_4\wedge e_9 =
+            e_1e_2e_8e_4e_9
+        \end{displaymath}
+    \item
+        Equation (\ref{eq:outer prod anticommutative}) allows us to swap
+        the order of two non-equal basis vectors if we negate the result.
+        This means that we can write:
+        \begin{displaymath}
+            e_1e_2e_3 = -e_2e_1e_3 = e_2e_3e_1 = -e_3e_2e_1
+        \end{displaymath}
+    \item
+        Whenever a basis vector appears next to itself, it
+        annihilates itself, because the geometric product of a basis vector with
+        itself equals one.
+        \begin{align}
+            \label{eq:same basis vectors next to eachother vanishes}
+            e_ie_i = 1
+        \end{align}
+        Example:
+        \begin{displaymath}
+            e_{112334} = e_{24}
+        \end{displaymath}
+\end{enumerate}
+
+Using these three rules we are able to simplify any geometric
+product of basis blades. Take the following example:
+\begin{align}
+    e_1e_{23}e_{31}e_2 &=\,\,\;\:e_1e_2e_3e_3e_1e_2  &&\text{\emph{using rule one}}   \nonumber \\
+                       &=\,\,\;\:e_1e_2e_1e_2        &&\text{\emph{using rule three}} \nonumber \\
+                       &=       -e_1e_1e_2e_2        &&\text{\emph{using rule two}} \nonumber \\
+                       &=\,\,\;\:-1                  &&\text{\emph{using rule three twice}} \nonumber \\
+\end{align}
+
+We can now create a so-called multiplication table which lists all
+the combinations of geometric products of basis blades. For
+$\mathcal{C}\ell_2$ it would look like figure \ref{tab:mul table
+2d}.
+
+\begin{figure}[ht]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+  % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+  \hline
+                 & \boldmath{$1$}   & \boldmath{$e_1$}   & \boldmath{$e_2$}  & \boldmath{$I$}    \\ \cline{1-2}\hline
+\boldmath{$1$}   & $1$              & $e_1$              & $e_2$             & $I$               \\ \cline{1-2}\hline
+\boldmath{$e_1$} & $e_1$            & $1$                & $I$               & $e_2$             \\ \cline{1-2}\hline
+\boldmath{$e_2$} & $e_2$            & $-I$               & $1$               & $-e_1$            \\ \cline{1-2}\hline
+\boldmath{$I$}   & $I$              & $-e_2$             & $e_1$             & $-1$              \\
+\cline{1-2}\hline
+\end{tabular}
+\end{center}
+\caption{Multiplication Table for basis blades in
+$\mathcal{C}\ell_2$} \label{tab:mul table 2d}
+\end{figure}
+
+According to this table, the multiplication of $I$ and $I$ should
+equal $-1$, which can be calculated as follows:
+\begin{align}
+    I^2 &= \,\,\;\:e_{12}e_{12} &&\text{\emph{by definition}}      \nonumber \\
+        &= \,\,\;\:e_1e_2e_1e_2 &&\text{\emph{using rule one}}     \nonumber \\
+        &= -e_2e_1e_1e_2        &&\text{\emph{using rule two}}     \nonumber \\
+        &= -e_2e_2              &&\text{\emph{using rule three}}   \nonumber \\
+        &= -1                   &&\text{\emph{using rule three}}   \nonumber
+\end{align}
+
+Now that we have the required knowledge on geometric products of
+basis blades, we can return to the geometric product of arbitrary
+blades. Here's equation (\ref{eq:full_geomprod_2d}) repeated for
+convenience:
+\begin{alignat}{6}
+    AB &= \alpha_1 \beta_1     &&+\alpha_1 \beta_2      e_1 &&+ \alpha_1 \beta_3     e_2 &&+ \alpha_1 \beta_4     I \nonumber\\
+       &+ \alpha_2 \beta_1 e_1 &&+\alpha_2 \beta_2  e_1 e_1 &&+ \alpha_2 \beta_3 e_1 e_2 &&+ \alpha_2 \beta_4 e_1 I \nonumber\\
+       &+ \alpha_3 \beta_1 e_2 &&+\alpha_3 \beta_2  e_2 e_1 &&+ \alpha_3 \beta_3 e_2 e_2 &&+ \alpha_3 \beta_4 e_2 I \nonumber\\
+       &+ \alpha_4 \beta_1 I   &&+\alpha_4 \beta_2  I   e_1 &&+ \alpha_4 \beta_3 I   e_2 &&+ \alpha_4 \beta_4 I   I \nonumber
+\end{alignat}
+We can simply look up the geometric product of basis blades in the
+multiplication table, and substitute the results:
+\begin{alignat}{6}
+    AB &= \alpha_1 \beta_1     &&+\alpha_1 \beta_2  e_1 &&+ \alpha_1 \beta_3 e_2    &&+ \alpha_1 \beta_4 I      \nonumber\\
+       &+ \alpha_2 \beta_1 e_1 &&+\alpha_2 \beta_2      &&+ \alpha_2 \beta_3 I      &&+ \alpha_2 \beta_4 e_2    \nonumber\\
+       &+ \alpha_3 \beta_1 e_2 &&-\alpha_3 \beta_2  I   &&+ \alpha_3 \beta_3        &&- \alpha_3 \beta_4 e_1    \nonumber\\
+       &+ \alpha_4 \beta_1 I   &&-\alpha_4 \beta_2  e_2 &&+ \alpha_4 \beta_3 e_1    &&- \alpha_4 \beta_4        \nonumber
+\end{alignat}
+Now the last step is to group the basis-blades together.
+\begin{alignat}{6}
+    \label{eq:geom prod 2d multivector}
+    AB &= (\alpha_1 \beta_1 + \alpha_2 \beta_2 + \alpha_3 \beta_3 - \alpha_4 \beta_4)              \\
+       &+ (\alpha_4 \beta_3 - \alpha_3 \beta_4 + \alpha_1 \beta_2 + \alpha_2 \beta_1) e_1 \nonumber\\
+       &+ (\alpha_1 \beta_3 - \alpha_4 \beta_2 + \alpha_2 \beta_4 + \alpha_3 \beta_1) e_2 \nonumber\\
+       &+ (\alpha_4 \beta_1 + \alpha_1 \beta_4 + \alpha_2 \beta_3 - \alpha_3 \beta_2) I   \nonumber
+\end{alignat}
+The final result is a linear combination of the four basis blades
+$\{1, e_1, e_2, I\}$ or, in other words, a multivector. This
+proves that the geometric algebra is closed under the geometric
+product.
+
+That is to say; so far I have only showed you how the geometric
+product works in $\mathcal{C}\ell_2$. It is trivial to extend the
+same methods to $\mathcal{C}\ell_3$ or higher. The same three
+simplification rules apply. Figure \ref{tab:mul table 3d} contains
+the multiplication table for $\mathcal{C}\ell_3$.\\
+
+\begin{figure}[ht]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+                       & \boldmath{$1$} & \boldmath{$e_{1}$}    & \boldmath{$e_{2}$} & \boldmath{$e_{3}$} & \boldmath{$e_{12}$} & \boldmath{$e_{13}$}   & \boldmath{$e_{23}$}   & \boldmath{$e_{123}$}  \\ \cline{1-2}\hline
+
+\boldmath{$1$}         & $1$            & $ e_{1}$              & $ e_{2}$           & $e_{3}$            & $ e_{12}$           & $ e_{13}$             & $ e_{23}$             & $ e_{123}$            \\ \cline{1-2}\hline
+\boldmath{$e_{1}$}     & $e_{1}$        & $ 1$                  & $ e_{12}$          & $e_{13}$           & $ e_{2}$            & $ e_{3}$              & $ e_{123}$            & $ e_{23}$             \\ \cline{1-2}\hline
+\boldmath{$e_{2}$}     & $e_{2}$        & $-e_{12}$             & $ 1 $              & $e_{23}$           & $-e_{1}$            & $-e_{123}$            & $ e_{3}$              & $-e_{13}$             \\ \cline{1-2}\hline
+\boldmath{$e_{3}$}     & $e_{3}$        & $-e_{13}$             & $-e_{23}$          & $1$                & $ e_{123}$          & $-e_{1}$              & $-e_{2}$              & $ e_{12}$             \\ \cline{1-2}\hline
+\boldmath{$e_{12}$}    & $e_{12}$       & $-e_{2}$              & $ e_{1}$           & $e_{123}$          & $-1$                & $-e_{23}$             & $ e_{13}$             & $-e_{3}$              \\ \cline{1-2}\hline
+\boldmath{$e_{13}$}    & $e_{13}$       & $-e_{3}$              & $-e_{123}$         & $e_{1}$            & $ e_{23}$           & $-1$                  & $-e_{12}$             & $ e_{2}$              \\ \cline{1-2}\hline
+\boldmath{$e_{23}$}    & $e_{23}$       & $ e_{123}$            & $-e_{3}$           & $e_{2}$            & $-e_{13}$           & $ e_{12}$             & $-1$                  & $-e_{1}$              \\ \cline{1-2}\hline
+\boldmath{$e_{123}$}   & $e_{123}$      & $ e_{23}$             & $-e_{13}$          & $e_{12}$           & $-e_{3}$            & $ e_{2}$              & $-e_{1}$              & $-1 $                 \\ \cline{1-2}\hline
+\end{tabular}
+\end{center}
+\caption{Multiplication Table for basis blades in
+$\mathcal{C}\ell_3$} \label{tab:mul table 3d}
+\end{figure}
+
+\section{The Dot and Outer Product revisited}
+
+We defined the geometric product for vectors as a combination of
+the dot and outer product:
+\begin{align*}
+    ab &= a\cdot b + a\wedge b
+\end{align*}
+We can rewrite these equations to express the dot product and
+outer product in terms of the geometric product:
+\begin{align}
+    \label{eq:outer product in terms of geometric product}
+    a\wedge b &= \frac{1}{2}(ab - ba)\\
+    \label{eq:inner product in terms of geometric product}
+    a\cdot  b &= \frac{1}{2}(ab + ba)
+\end{align}
+
+To illustrate, let us prove (\ref{eq:outer product in terms of
+geometric product}). Let's take two multivectors A and B $\in
+\mathcal{C}\ell_2$ for which the scalar and bivector parts are
+zero, e.g. two vectors. Using equation (\ref{eq:geom prod 2d
+multivector}) and taking into account that
+$\alpha_1=\beta_1=\alpha_4=\beta_4=0$ we can write $AB$ and $BA$
+as:
+\begin{align}
+    \label{eq:AB for vectors}
+    AB &= (\alpha_2 \beta_2 + \alpha_3 \beta_3)   \\
+       &+ (\alpha_2 \beta_3 - \alpha_3 \beta_2) I \nonumber
+\end{align}
+\begin{align}
+    \label{eq:BA for vectors}
+    BA &= (\beta_2 \alpha_2 + \beta_3 \alpha_3)   \\
+       &+ (\beta_2 \alpha_3 - \beta_3 \alpha_2) I \nonumber
+\end{align}
+
+Using these in equation (\ref{eq:outer product in terms of
+geometric product}) we get:
+\begin{displaymath}
+    \frac{  \overbrace{((\alpha_2 \beta_2 + \alpha_3 \beta_3) + (\alpha_2 \beta_3 - \alpha_3 \beta_2) I)}^{AB}
+          - \overbrace{((\beta_2 \alpha_2 + \beta_3 \alpha_3) + (\beta_2 \alpha_3 - \beta_3 \alpha_2) I)}^{BA}}{2}
+\end{displaymath}
+Reordering we get:
+\begin{displaymath}
+    \frac{  \overbrace{(\alpha_2 \beta_2 + \alpha_3 \beta_3) -    (\beta_2 \alpha_2 + \beta_3 \alpha_3)  }^{Scalar Part}
+          + \overbrace{(\alpha_2 \beta_3 - \alpha_3 \beta_2) I - (\beta_2 \alpha_3 - \beta_3 \alpha_2) I}^{Bivector Part}}{2}
+\end{displaymath}
+Notice the scalar part results in zero, which leaves us with:
+\begin{displaymath}
+    \frac{(\alpha_2 \beta_3 - \alpha_3 \beta_2) I - (\beta_2 \alpha_3 - \beta_3 \alpha_2) I}{2}
+\end{displaymath}
+Subtracting the two bivectors we get:
+\begin{displaymath}
+    \frac{(\alpha_2 \beta_3 - \alpha_3 \beta_2 - \beta_2 \alpha_3 + \beta_3 \alpha_2) I}{2}
+\end{displaymath}
+This may be rewritten as:
+\begin{displaymath}
+    \frac{(2\alpha_2\beta_3 - 2\alpha_3\beta_2) I}{2}
+\end{displaymath}
+And now dividing by $2$ we obtain:
+\begin{displaymath}
+    A\wedge B = (\alpha_2\beta_3 - \alpha_3\beta_2)I
+\end{displaymath}
+for multivectors $A$ and $B$ with zero scalar and bivector part.
+Compare this with equation (\ref{eq:2d outer prod}) that defines
+the outer product for two vectors $a$ and $b$. If you remember
+that the vector part of a multivector $\in \mathcal{C}\ell_2$ is
+in the second and third component, you will realize that these
+equations are the same.
+
+Note that (\ref{eq:outer product in terms of geometric product})
+and (\ref{eq:inner product in terms of geometric product}) only
+hold for vectors. The inner and outer product of higher order
+blades is more complicated, not to mention the inner and outer
+product for multivectors. Yet, let us try to see what they could
+mean.
+
+\section{The Inner Product}
+
+I informally demonstrated what the outer product of a vector and a
+bivector looks like when I introduced trivectors. What about the
+dot product? What could the dot product of a vector and a bivector
+look like? Figure \ref{fig:dot product vector bivector} depicts
+the result.
+
+\begin{figure}[ht]
+\centering
+\input{innerproduct.pstex_t}
+\caption{The dot product of a bivector and a vector}
+\label{fig:dot product vector bivector}
+\end{figure}
+
+Notice how the inner product is the vector perpendicular to the
+actual projection. In more general terms, it is the
+\emph{complement (within the subspace of $B$) of the orthogonal
+projection of $a$ onto $B$.} \cite{bib:dorst part 1} We will no
+longer call this generalization a dot product. The generic notion
+of projections and perpendicularity is captured by an operator
+called the \emph{inner product}.
+
+Unfortunately, there is not just one definition of the inner
+product. There are several versions floating around, their
+usefulness depending on the problem area. They are not
+fundamentally different however, and all of them can be expressed
+in terms of the others. In fact, one could say that the
+flexibility of the different inner products is one of the
+strengths of geometric algebra. Unfortunately, this does not
+really help those trying to learn geometric algebra, as it can be
+overwhelming and confusing.
+
+The default and best known inner product \cite{bib:hestenes new
+foundations} is very useful in Euclidian mechanics, whereas the
+\emph{contraction inner product} \cite{bib:dorst part 1}, also
+known as the Lounesto inner product, is more useful in computer
+science. Other inner products include the  semi-symmetric or
+semi-commutative inner product, also known as the Hestenes inner
+product, the  modified Hestenes or (fat)dot product and the forced
+Euclidean contractive inner product. \cite{bib:lots of inner
+products} \cite{bib:leo dorst inner products}
+
+Obviously, because of our interest for computer science, we are
+most interested in the contraction inner product. We will use the
+$\rfloor$ symbol to denote a contraction. It may seem a bit weird
+at first, but it will turn out to be very useful. Luckily, for two
+vectors it works exactly as the traditional inner product or dot
+product. For different blades, it is defined as follows
+\cite{bib:dorst part 1}:
+\begin{alignat}{2}
+    \text{scalars           \;\;\;\;\;\;}&\alpha \rfloor \beta = \alpha \beta \\
+    \text{vector and scalar \;\;\;\;\;\;}&a \rfloor \beta = 0                 \\
+    \text{scalar and vector \;\;\;\;\;\;}&\alpha \rfloor b = \alpha b         \\
+    \text{vectors \;\;\;\;\;\;}&a \rfloor b = a \cdot b \;\;\text{(the usual dot product)}  \\
+    \text{vector, multivector\;\;\;\;\;\;}&a \rfloor (b \wedge C) = (a \rfloor b)\wedge C - b\wedge (a \rfloor C) \label{eq:recursive inner} \\
+    \text{distribution\;\;\;\;\;\;}&(A \wedge B)\rfloor C = A\rfloor(B\rfloor C)
+\end{alignat}
+
+Try to understand how the above provides a recursive definition of
+the contraction operator. There are the basic rules for vectors
+and scalars, and there is (\ref{eq:recursive inner}) for the
+contraction between a vector and the outer product of a vector and
+a multivector. Because linearity holds over the contraction, we
+can decompose contractions with multivectors into contractions
+with blades. Now, remember that any blade $D$ with grade $n$ can
+be written as the outer product of a vector $b$ and a blade $C$
+with grade $n-1$. This means that the contraction $a\rfloor D$ can
+be written as $a\rfloor (b\wedge C)$ and consequently as $(a
+\rfloor b)\wedge C - b\wedge (a \rfloor C)$ according to
+(\ref{eq:recursive inner}). We know how to calculate $a\rfloor b$
+by definition, and we can recursively solve $a\rfloor C$ until the
+grade of $C$ is equal to $1$, which reduces it to a contraction of
+two vectors.
+
+Obviously, this is not a very efficient way of calculating the
+inner product. Fortunately, the inner product can be expressed in
+terms of the geometric product (and vice versa as we've done
+before), which allows for fast calculations. \cite{bib:suter c++
+implementation}
+
+I will return to the inner product when I talk about grades some
+more in the tools chapter. In the chapter on applications we will
+see where and how the contraction product is useful. From now on,
+whenever I refer to the inner product I mean any of the
+generalized inner products. If I need the contraction, I will
+mention it explicitly. I will allow myself to be sloppy, and
+continue to use the $\cdot$ and $\rfloor$ symbol interchangeably.
+
+\section{Inner, Outer and Geometric}
+
+We saw in equation (\ref{eq:geometric_product_vectors}) that the
+geometric product for vectors could be defined in terms of the dot
+(inner) and outer product. What if we use (\ref{eq:outer product
+in terms of geometric product}) and (\ref{eq:inner product in
+terms of geometric product}) combined:
+\begin{align*}
+    \frac{1}{2}(ab + ba) + \frac{1}{2}(ab - ba) &= \frac{(ab + ba) + (ab - ba)}{2} \nonumber\\
+    &= \frac{(ab + ba + ab - ba)}{2} \nonumber\\
+    &= \frac{2ab}{2} \nonumber\\
+    &= ab\nonumber
+\end{align*}
+
+This demonstrates the two possible approaches to introduce
+geometric algebra. Some books \cite{bib:hestenes clifford algebra}
+give an abstract definition of the geometric product, by means of
+a few axioms, and derive the inner and outer product from it.
+Other material \cite{bib:hestenes new foundations} starts with the
+inner and outer product and demonstrates how the geometric product
+follows from them.
+
+You may prefer one over the other, but ultimately it is the way
+the geometric product, the inner product and the outer product
+work together that gives geometric algebra its strength. For two
+vectors $a$ and $b$ we have:
+\begin{displaymath}
+    ab = a\cdot b + a\wedge b
+\end{displaymath}
+as a result, they are orthogonal if ab = -ba because the inner
+product of two perpendicular vectors is zero. And they are
+collinear if ab = ba because the wedge of two collinear vectors is
+zero. If the two vectors are neither collinear nor orthogonal the
+geometric product is able to express their relationship as
+`something in between'.
+
+\chapter{Tools}
+
+Strictly speaking, all we need is an algebra of multivectors with
+the geometric product as its operator. Nevertheless, this chapter
+introduces some more definitions and operators that will be of
+great use in many applications. If you are tired of all this
+theory, I suggest you skip over this section and start with some
+of the applications. If you encounter unfamiliar concepts, you can
+refer to this chapter.
+
+\section{Grades}
+
+I briefly talked about grades in the chapter on subspaces. The
+grade of a blade is the dimension of the subspace it represents.
+Thus multivectors have combinations of grades, as they are linear
+combinations of blades. We denote the blade-part with grade $s$ of
+a multivector $A$ using $\langle A \rangle_{s}$. For multivector
+$A = (4, 8, 5, 6, 2, 4, 9, 3) \in \mathcal{C}\ell_3$ we have:
+\begin{align}
+    \langle A \rangle_{0} &= 4          &&\text{scalar part} \nonumber\\
+    \langle A \rangle_{1} &= (8, 5, 6)  &&\text{vector part} \nonumber\\
+    \langle A \rangle_{2} &= (2, 4, 9)  &&\text{bivector part} \nonumber\\
+    \langle A \rangle_{3} &= 3          &&\text{trivector part} \nonumber
+\end{align}
+
+Any multivector $A$ in $\mathcal{C}\ell_n$ can be denoted as a sum
+of blades, like we already did informally:
+
+\begin{displaymath}
+    \sum_{k = 0}^{n}\langle A \rangle_{k} = \langle A \rangle_{0}
+    + \langle A \rangle_{1} + \ldots + \langle A \rangle_{n}
+\end{displaymath}
+
+Using this notation I can demonstrate what the inner and outer
+product mean for grades. For two vectors $a$ and $b$ the inner
+product $a\cdot b$ results in a scalar $c$. The vectors are
+$1$-blades, the scalar is a $0$-blade. This leads to:
+\begin{displaymath}
+\langle a \rangle_{1} \cdot \langle b \rangle_{1} = \langle ab
+\rangle_{0}
+\end{displaymath}
+In figure \ref{fig:dot product vector bivector} we saw that a
+vector $a$ projected onto a bivector $B$ resulted in a vector.
+Here, we'll be using the contraction product. So, in other words
+the contraction product of a $2$-blade and a $1$-blade results in
+a $1$-blade. Using a multivector notation:
+\begin{displaymath}
+\langle a \rangle_{1} \rfloor \langle B \rangle_{2} = \langle aB
+\rangle_{2-1}
+\end{displaymath}
+Generalizing this for blades $A$ and $B$ with grade $s$ and $t$
+respectively:
+\begin{displaymath}
+\langle A \rangle_{s} \rfloor \langle B \rangle_{t} = \langle AB
+\rangle_{u}\;\;\text{where}\;\; u = \left\{%
+\begin{array}{ll}
+    s > t, & \hbox{0} \\
+    s \leq t, & \hbox{t - s} \\
+\end{array}%
+\right.
+\end{displaymath}
+We might say that the contraction inner product is a
+'grade-lowering' operation.
+
+And, of course, the outer product is its opposite as a
+grade-increasing operation. Recall that for two $1$-blades or
+vectors the outer product resulted in a $2$-blade or bivector:
+\begin{displaymath}
+\langle a \rangle_{1} \wedge \langle b \rangle_{1} = \langle ab
+\rangle_{2}
+\end{displaymath}
+The outer product between a $2$-blade and a $1$-blade results in a
+$2+1=3$-blade or trivector. Generalizing we get for two blades $A$
+and $B$ with grade $s$ and $t$:
+\begin{displaymath}
+\langle A \rangle_{s} \wedge \langle B \rangle_{t} = \langle AB
+\rangle_{s+t}
+\end{displaymath}
+
+Note that $A$ and $B$ have to be blades. These equations do not
+hold when they are arbitrary multivectors.
+
+\section{The Inverse}
+
+Most multivectors have a left inverse satisfying $A^{-1_{L}}A = 1$
+and a right inverse satisfying $AA^{-1_{R}} = 1$. We can use these
+inverses to divide a multivector by another. Recall that the
+geometric product is not commutative therefore the left and right
+inverse may or may not be equal. This means that the $\frac{A}{B}$
+notation is ambiguous since it can mean both $B^{-1_{L}}A$ and
+$AB^{-1_{R}}$.
+
+Unfortunately calculating the inverse of a geometric product is
+not trivial, much like calculating inverses of matrices is
+complicated for all but a few special cases.
+
+Luckily there is an important set of multivectors for which
+calculating the inverse is very straightforward. These are called
+the \emph{versors} and they have the property that they are a
+geometric product of vectors. A multivector $A$ is a versor if it
+can be written as:
+\begin{displaymath}
+ A = v_1v_2v_3...v_k
+\end{displaymath}
+where $v_1...v_k$ are vectors, i.e. $1$-blades. As a fortunate
+consequence, all blades are versors too.\footnote{Remember that we
+use vectors to create subspaces of higher dimension, using the
+outer product.} For a versor $A$ we define its \emph{reverse},
+using the $\dagger$ symbol, as:
+\begin{align}
+    \label{eq:reverse versor}
+    A^\dagger = v_kv_{k-1}...v_2v_1
+\end{align}
+
+This means that, because of equation (\ref{eq:outer prod
+anticommutative}), the reverse of a blade is only a possible sign
+change. Remember that each swap of indices in the product produces
+a sign change, thus if $k$ is uneven the reverste of $A$ is equal
+to itself, and if it's uneven the reverse of $A$ is the $-A$. Note
+that this does not apply to versors in general.
+
+The left and right inverse of a versor are the same and can be
+calculated as follows:
+\begin{align}
+    \label{eq:inverse versor}
+    A^{-1} = \frac{A^\dagger}{A^\dagger A}
+\end{align}
+
+To understand this, we have to start by realizing that the
+denominator is always a scalar because:
+\begin{displaymath}
+A^\dagger A = v_1v_2...v_{k-1}v_kv_kv_{k-1}...v_2v_1
+           = |v_1|^2|v_2|^2...|v_{k-1}|^2|v_k|^2
+\end{displaymath}
+And since a scalar divided by itself equals one, this means that:
+\begin{align*}
+    A^{-1}A = \frac{A^\dagger}{A^\dagger A}A = \frac{A^\dagger A}{A^\dagger A}= 1
+\end{align*}
+Furthermore it also proves that the left and right inverse are the
+same. Division by a scalar $\alpha$ is multiplication by
+$1/\alpha$, which is, according to equation (\ref{eq:geom prod
+associative}) commutative, proving that the left and right
+inverses of a versor are indeed equal.
+
+This means that for a versor $A$, we have $A^{-1_{L}} = A^{-1_{R}}
+= A^{-1}$ and therefore the following:
+\begin{displaymath}
+    A^{-1_{L}}A = AA^{-1_{R}} = A^{-1}A = AA^{-1} = 1
+\end{displaymath}
+
+It is important to notice that in the case of vectors, the scalar
+represents the squared magnitude of the vector. As a consequence,
+the inverse of a unit vector is equal to itself.
+
+Not many people are comfortable with the idea of division by
+vectors, bivectors, or multivectors. They are only accustomed to
+division by scalars. But if we have a geometric product and a
+definition for the inverse, nothing stops us from division. Later
+we will see that this is extremely useful.
+
+\section{Pseudoscalars}
+
+In equation (\ref{eq:num basis blades for grade}) we saw how to
+calculate the number of basis blades for a given grade. From this
+it follows that every geometric algebra has only one basis
+$0$-blade or basis-scalar, independent of the dimension of the
+algebra:
+\begin{displaymath}
+    \binom{n}{0} = \frac{n!}{(n-0)!0!} = \frac{n!}{n!} = 1
+\end{displaymath}
+More interesting is the basis blade with the highest dimension.
+For a geometric algebra $\mathcal{C}\ell_n$ the number of blades
+with dimension n is:
+\begin{displaymath}
+    \binom{n}{n} = \frac{n!}{(n-n)!n!} = \frac{n!}{n!} = 1
+\end{displaymath}
+In $\mathcal{C}\ell_2$ this was $e_1e_2 = I$ as shown in figure
+\ref{fig:2d_basis}. In $\mathcal{C}\ell_3$ this is the trivector
+$e_1e_2e_3 = e_{123}$.
+
+In general every geometric algebra has a single basis blade of
+highest dimension. This is called the pseudoscalar.
+
+\section{The Dual}
+
+Traditional linear algebra uses normal vectors to represent
+planes. Geometric algebra introduces bivectors which can be
+used for the same purpose. By using the pseudoscalar we can get an
+understanding of the relationship between the two representations.
+
+The dual $A^*$ of a multivector A is defined as follows:
+\begin{align}
+    \label{eq:dual}
+    A^* = AI^{-1}
+\end{align}
+where $I$ represents the pseudoscalar of the geometric algebra
+that is being used. The pseudoscalar is a blade (the blade with
+highest grade) and therefore its left and right inverse are the
+same, and hence the above formula is not ambiguous.
+
+Let us consider a simple example in $\mathcal{C}\ell_3$,
+calculating the dual of the basis bivector $e_{12}$. The
+pseudoscalar is $e_{123}$. Pseudoscalars are blades and thus
+versors. You can check yourself that its inverse is $e_3e_2e_1$.
+We'll use this to calculate the dual of $e_{12}$:
+\begin{align}
+    e_{12}^* &= e_{12}e_3e_2e_1     \nonumber\\
+             &= e_1e_2e_3e_2e_1     \nonumber\\
+             &= -e_1e_3e_2e_2e_1    \nonumber\\
+             &= -e_1e_3e_1          \nonumber\\
+             &= e_1e_1e_3           \nonumber\\
+             &= e_3                 \nonumber\\
+\end{align}
+Thus, the dual is basis vector $e_3$, which is exactly the normal
+vector of basis bivector $e_{12}$. In fact, this is true for all
+bivectors. If we have two arbitrary vectors $a$ and $b$ $\in
+\mathcal{C}\ell_3$:
+\begin{align}
+    a &= \alpha_1e_1 + \alpha_2e_2 + \alpha_3e_3   \nonumber\\
+    b &= \beta_1e_1 + \beta_2e_2 + \beta_3e_3      \nonumber
+\end{align}
+According to equation (\ref{eq:wedge in 3d}) their outer product
+is:
+\begin{displaymath}
+    a\wedge b = (\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_{12} +
+                (\alpha_{1}\beta_{3} - \alpha_{3}\beta_{1})e_{13} +
+                (\alpha_{2}\beta_{3} - \alpha_{3}\beta_{2})e_{23}
+\end{displaymath}
+And its dual $(a\wedge b)^*$ becomes:
+\begin{align}
+    \label{eq:dual in 3d}
+    (a\wedge b)^* = &(a\wedge b)e_{123}^{-1}   \nonumber\\
+                  \nonumber\\
+                  = &(a\wedge b)e_3e_2e_1   \nonumber\\
+                  \nonumber\\
+                  = &((\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_{12} +
+                     (\alpha_{1}\beta_{3} - \alpha_{3}\beta_{1})e_{13} +
+                     (\alpha_{2}\beta_{3} - \alpha_{3}\beta_{2})e_{23}) e_3e_2e_1   \nonumber\\
+                  \nonumber\\
+                  = &(\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_{12}e_3e_2e_1 + \nonumber\\
+                    &(\alpha_{1}\beta_{3} - \alpha_{3}\beta_{1})e_{13}e_3e_2e_1 + \nonumber\\
+                    &(\alpha_{2}\beta_{3} - \alpha_{3}\beta_{2})e_{23}e_3e_2e_1   \nonumber\\
+                  \nonumber\\
+                  = &(\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_1e_2e_3e_2e_1 + \nonumber\\
+                    &(\alpha_{1}\beta_{3} - \alpha_{3}\beta_{1})e_1e_3e_3e_2e_1 + \nonumber\\
+                    &(\alpha_{2}\beta_{3} - \alpha_{3}\beta_{2})e_2e_3e_3e_2e_1   \nonumber\\
+                  \nonumber\\
+                  = &(\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_3 -
+                     (\alpha_{1}\beta_{3} - \alpha_{3}\beta_{1})e_2 +
+                     (\alpha_{2}\beta_{3} - \alpha_{3}\beta_{2})e_1 \nonumber \\
+                  \nonumber\\
+                  = &(\alpha_{2}\beta_{3} - \alpha_{3}\beta_{2})e_1 +
+                     (\alpha_{3}\beta_{1} - \alpha_{1}\beta_{3})e_2 +
+                     (\alpha_{1}\beta_{2} - \alpha_{2}\beta_{1})e_3
+\end{align}
+Which is exactly the traditional cross product. We conclude that in three
+dimensions, the dual of a bivector is its normal. The dual can be
+used to convert between bivector and normal representations. But
+the dual is even more, because it is defined for any multivector.
+
+\section{Projection and Rejection}
+
+If we have a vector $a$ and bivector $B$ we can decompose $a$ in
+two parts. One\ part $a_{||_{B}}$ that is collinear with B. We
+call this the \emph{projection} of $a$ onto $B$. The other part is
+$a_{\bot_{B}}$, and orthogonal to $B$. We call this the
+\emph{rejection}\footnote{This term has been introduced by David
+Hestenes in his New Foundations For Classical Mechanics
+\cite{bib:hestenes new foundations}. To quote: ``The new term
+`rejection' has been introduced here in the absence of a
+satisfactory standard name for this important concept.''} of $a$
+from $B$. Mathematically:
+\begin{equation}
+        a = a_{||_{B}} + a_{\bot_{B}}
+        \label{eq:decomposition}
+\end{equation}
+
+This is depicted in figure \ref{fig:proj rej}. Such a
+decomposition turns out to be very useful and I will demonstrate
+how to calculate it.
+\begin{figure}[ht]
+\centering
+\input{proj_rej.pstex_t}
+\caption{Projection and rejection of vector $a$ in bivector $B$}
+\label{fig:proj rej}
+\end{figure}
+
+First, equation (\ref{eq:geometric_product_vectors}) says that the
+geometric product of two vectors is equal to the sum of the inner
+and outer product. There is a generalization of this saying that
+for arbitrary vector $a$ and $k$-blade $B$ the geometric product
+is:
+\begin{align}
+    aB = a\cdot B + a\wedge B
+    \label{eq:geom prod a B}
+\end{align}
+Note that $a$ has to be a vector, and $B$ a blade of any grade.
+That is, this doesn't hold for multivectors in general. Proofs can
+be found in the references. \cite{bib:chris doran thesis}
+\cite{bib:hestenes new foundations}
+
+Using (\ref{eq:geom prod a B}) we can calculate the decomposition
+(\ref{eq:decomposition}) of any vector $a$ onto a bivector $B$. By
+definition, the inner and outer product of respectively orthogonal
+and collinear blades are zero. In other words, the inner product
+of a vector orthogonal to a bivector is zero:
+\begin{align}
+        a_{\bot_{B}} \cdot B &= 0  \label{eq:a cdot B 0}
+\end{align}
+Likewise the outer product of a vector collinear with a bivector
+is zero:
+\begin{align}
+        a_{||_{B}} \wedge B &= 0  \label{eq:a wedge B 0}
+\end{align}
+Let's see what happens if we multiply the orthogonal part of
+vector $a$ with bivector B:
+\begin{align}
+        a_{\bot_{B}}B &= a_{\bot_{B}}\cdot B + a_{\bot_{B}}\wedge B &&&\text{} \nonumber \\
+                      &= a_{\bot_{B}}\wedge B &&&\text{using equation (\ref{eq:a cdot B 0})} \nonumber \\
+                      &= a_{\bot_{B}}\wedge B + a_{||_{B}}\wedge B &&&\text{equation (\ref{eq:a wedge B 0})} \nonumber \\
+                      &= (a_{\bot_{B}} + a_{||_{B}})\wedge B &&&\text{equation (\ref{eq:outer prod distributivity over add})} \nonumber \\
+                      &= a\wedge B &&&\text{equation (\ref{eq:decomposition})} \nonumber
+\end{align}
+
+Thus, the perpendicular part of vector $a$ times bivector $B$ is
+equal to the outer product of $a$ and $B$. Now all we need to do
+is divide both sides of the equation by $B$ to obtain the
+perpendicular part of $a$:
+\begin{align}
+        a_{\bot_{B}}B       &= a\wedge B           \nonumber \\
+        a_{\bot_{B}}BB^{-1} &= (a\wedge B)B^{-1}   \nonumber \\
+        a_{\bot_{B}}        &= (a\wedge B)B^{-1}   \nonumber
+\end{align}
+Notice that there is no ambiguity in using the inverse because $B$
+is a blade or versor, and its left and right inverses are
+therefore the same. The conclusion is:
+\begin{equation}
+    a_{\bot_{B}} = (a\wedge B)B^{-1}   \label{eq:perpendicular calculation}
+\end{equation}
+
+Calculating the collinear part of vector $a$ follows similar
+steps:
+\begin{align}
+        a_{||_{B}}B &= a_{||_{B}}\cdot B + a_{||_{B}}\wedge B \nonumber \\
+                    &= a_{||_{B}}\cdot B \nonumber \\
+                    &= a_{||_{B}}\cdot B + a_{\bot_{B}}\cdot B \nonumber \\
+                    &= (a_{\bot_{B}} + a_{||_{B}})\cdot B \nonumber \\
+                    &= a\cdot B \nonumber
+\end{align}
+Again multiply both sides with the inverse bivector:
+\begin{displaymath}
+       a_{||_{B}}BB^{-1} = (a\cdot B)B^{-1}
+\end{displaymath}
+To conclude:
+\begin{equation}
+        a_{||_{B}} = (a\cdot B)B^{-1} \label{eq:collinear calculation}
+\end{equation}
+Using these definitions, we can now confirm that $a_{||_B} +
+a_{\bot_B} = a$
+\begin{align}
+        a_{||_{B}} + a_{\bot_{B}} &= (a\wedge B)B^{-1} + (a\cdot B)B^{-1} &&&\text{equation (\ref{eq:collinear calculation}) and (\ref{eq:perpendicular calculation})} \nonumber \\
+        &= (a\wedge B + a\cdot B)B^{-1} &&&\text{equation (\ref{eq:geom prod associative})} \nonumber \\
+        &= aBB^{-1} &&&\text{equation (\ref{eq:geom prod a B})} \nonumber \\
+        &= a &&&\text{by definition of the inverse} \nonumber
+\end{align}
+
+\newpage
+\section{Reflections}
+
+Armed with a way of decomposing blades in orthogonal and collinear
+parts we can take a look at reflections. We will get ahead of
+ourselves and take a specific look at the geometric algebra of the
+Euclidian space $\mathbb{R}^3$ denoted with $\mathcal{C}\ell_3$.
+Suppose we have a bivector $U$. Its dual $U^*$ will be the normal
+vector $u$. What if we multiply a vector $a$ with vector $u$,
+projecting and rejecting $a$ onto $U$ at the same time:
+\begin{align*}
+        ua &= u(a_{||_{U}} + a_{\bot_{U}}) \\
+           &=  ua_{||_{U}} + ua_{\bot_{U}}
+\end{align*}
+Using (\ref{eq:geometric_product_vectors}) we write it in full:
+\begin{align*}
+        ua &= (u\cdot a_{||_{U}} + u\wedge a_{||_{U}}) +
+              (u\cdot a_{\bot_{U}}+ u\wedge a_{\bot_{U}})
+\end{align*}
+Note that (because $u$ is the normal of $U$) the vectors
+$a_{||_{U}}$ and $u$ are perpendicular. This means that the inner
+product $a_{||_{U}}\cdot u$ equals zero. Likewise, the vectors
+$a_{\bot_{U}}$ and $u$ are collinear. This means that the outer
+product $a_{||_{U}}\wedge u$ equals zero. Removing these two $0$
+terms:
+\begin{align*}
+        ua &= u\wedge a_{||_{U}} + u\cdot a_{\bot_{U}} \\
+           &= u\cdot a_{\bot_{U}} + u\wedge a_{||_{U}}
+\end{align*}
+Recall that the inner product between two vectors is commutative,
+and the outer product is anticommutative, so we can write:
+\begin{align*}
+        ua &= a_{\bot_{U}}\cdot u - a_{||_{U}} \wedge u
+\end{align*}
+We can now insert those $0$-terms back in (putting in the form of
+equation (\ref{eq:geometric_product_vectors})):
+\begin{align*}
+        ua &= (a_{\bot_{U}}\cdot u + a_{\bot_{U}}\wedge u) -
+              (a_{||_{U}}\cdot u   + a_{||_{U}}\wedge u)
+\end{align*}
+Writing it as a geometric product now:
+\begin{align*}
+        ua &= a_{||_{U}}u - a_{\bot_{U}}u   \\
+           &= (a_{||_{U}} - a_{\bot_{U}})u
+\end{align*}
+Meaning that:
+\begin{align*}
+        -ua &= -(a_{||_{U}} - a_{\bot_{U}})u    \\
+            &=  (a_{\bot_{U}} - a_{||_{U}})u
+\end{align*}
+Notice how we changed the addition of the perpendicular part into
+a subtraction by multiplying with $-u$. Now, if we add a
+multiplication with the inverse we obtain the following, depicted
+in figure \ref{fig:reflection}:
+\begin{align*}
+    -uau^{-1} &= -u(a_{||_{U}} + a_{\bot_{U}})u^{-1} \\
+              &= (a_{||_{U}} - a_{\bot_{U}})uu^{-1} \\
+              &= a_{||_{U}} - a_{\bot_{U}}
+\end{align*}
+\begin{figure}[ht]
+\centering
+\input{reflection.pstex_t}
+\caption{Reflection} \label{fig:reflection}
+\end{figure}
+In general, if we sandwich a vector $a$ in between another vector
+$-u$ and its inverse $u^{-1}$, we obtain a reflection in the dual
+$u^*$.
+
+Note that in many practical cases $u$ will be a unit vector, which
+means its inverse is $u$ itself. Thus the reflection of a vector
+$a$ in a plane with unit-normal $u$ is simply $-uau$. Later, we
+will see that reflections are not only useful by themselves, but
+combined they allow us to do rotations.
+
+\newpage
+
+\section{The Meet}
+
+The meet operator is an operator between two arbitrary blades $A$
+and $B$ and defined as follows:
+\begin{align*}
+    A\cap B = A^* \cdot B
+\end{align*}
+In other words, the meet $A\cap B$ is the inner product of the
+dual of $A$ with $B$. It is no coincidence that the $\cap$ symbol
+is used to denote the meet. The result of a meet represents the
+smallest common subspaces of blades $A$ and $B$. Let's see, in an
+informal way, what the meet operator does for two bivectors.
+Looking at figure \ref{fig:meet} we see two bivectors $A$ and $B$.
+\begin{figure}[ht]
+\centering
+\input{meet.pstex_t}
+\caption{The Meet} \label{fig:meet}
+\end{figure}
+
+In this figure, the dual of bivector $A$ will be the normal vector
+$A^*$. Then, as we've already seen, the inner product of this
+vector with bivector $B$ will create the vector perpendicular to
+the projected vector $a'$. This is exactly the vector that lies on
+the intersection of the two bivectors.
+
+A more formal proof of the above, or even the full proof that the
+meet operator represents the smallest common subspace of
+\emph{any} two blades, is far from trivial and beyond this paper.
+Here, I just want to demonstrate that there is a meet operator,
+and that it is easily defined using the dual and the inner
+product. We will be using the meet operator later when we talk
+about intersections between primitives.
+
+\chapter{Applications}
+
+Up until now I haven't focused on the practical value of geometric
+algebra. With an understanding of the fundamentals, we can start
+applying the theory to real world domains. This is where geometric
+algebra reveals its power, but also its difficulty.
+
+Geometric algebra supplies us with an arithmetic of subspaces, but
+it is up to us to interpret each subspace and operation and relate
+it to some real-life concept. This chapter will demonstrate how
+different geometric algebras combined with different
+interpretations can be used to explain traditional geometric
+relations.
+
+\section{The Euclidian Plane}
+
+For an easy start, we'll consider the two dimensional Euclidian
+Plane to learn about some of the things its geometric algebra
+$\mathcal{C}\ell_2$ has to offer.
+
+\subsection{Complex Numbers}
+
+If you recall the geometric algebra of the Euclidian Plane, you
+might remember we used $I$ to denote the basis bivector. Then, in
+table \ref{tab:mul table 2d} we saw that $I^2 = -1$. Thus, we
+might say:
+
+\begin{displaymath}
+    I = \sqrt{-1}
+\end{displaymath}
+
+Suppose we interpret a multivector with a scalar and bivector
+blade as a complex number. The scalar corresponds to the real
+part, and the bivector to the imaginary part. Thus, we can
+interpret a multivector $(\alpha_1, \alpha_2, \alpha_3, \alpha_4)$
+from $\mathcal{C}\ell_2$ as a complex number $\alpha_1+i\alpha_4$
+as long as $\alpha_2$ and $\alpha_3$ are zero.
+
+Not surprisingly, multivector addition and subtraction corresponds
+directly with complex number addition and subtraction. But even
+more so, the geometric product is exactly the multiplication of
+complex numbers, as the following will prove.
+
+Recall equation (\ref{eq:geom prod 2d multivector}); the full
+geometric product of multivectors $A = (\alpha_1, \alpha_2,
+\alpha_3, \alpha_4)$ and $B = (\beta_1, \beta_2, \beta_3,
+\beta_4)$, repeated here:
+\begin{align}
+    AB &= ((\alpha_1 \beta_1) + (\alpha_2 \beta_2) + (\alpha_3 \beta_3) - (\alpha_4 \beta_4))     \nonumber\\
+       &+ ((\alpha_4 \beta_3) - (\alpha_3 \beta_4) + (\alpha_1 \beta_2) + (\alpha_2 \beta_1)) e_1 \nonumber\\
+       &+ ((\alpha_1 \beta_3) - (\alpha_4 \beta_2) + (\alpha_2 \beta_4) + (\alpha_3 \beta_1)) e_2 \nonumber\\
+       &+ ((\alpha_4 \beta_1) + (\alpha_1 \beta_4) + (\alpha_2 \beta_3) - (\alpha_3 \beta_2)) I   \nonumber
+\end{align}
+If A and B are complex numbers, $\alpha_2$, $\alpha_3$, $\beta_2$
+and $\beta_3$ will equal zero. Thus we can discard those parts to
+obtain:
+\begin{align}
+    AB &= ((\alpha_1 \beta_1) - (\alpha_4 \beta_4))     \nonumber\\
+       &+ ((\alpha_4 \beta_1) + (\alpha_1 \beta_4)) I   \nonumber
+\end{align}
+With $\alpha_1$ and $\beta_1$ being the real parts, and $\alpha_4$
+and $\beta_4$ being the imaginary parts, this is exactly a complex
+number multiplication.
+
+\subsection{Rotations}
+
+I will discuss rotations in two dimensions very briefly. When we
+return to rotations in three dimensions I will introduce the more
+general dimension-free theory and give several longer and more
+formal proofs.
+
+If we want to rotate a vector $a = \alpha_2e_1 + \alpha_3e_2$ over
+an angle $\theta$ into vector $a' = \alpha_2'e_1 + \alpha_3'e_2$,
+we can employ the following well known formulas:
+\begin{align}
+    \alpha_2' &= \cos(\theta)\alpha_2 - \sin(\theta)\alpha_3 \label{eq:standard 2d rotation x} \\
+    \alpha_3' &= \sin(\theta)\alpha_2 + \cos(\theta)\alpha_3 \label{eq:standard 2d rotation y}
+\end{align}
+
+Or, more commonly we employ the matrix formula $a' = Ma$ where $M$
+is:
+\begin{equation*}
+    \left[
+    \begin{array}{rr}
+    \cos(\theta)&-\sin(\theta)\\
+    \sin(\theta)& \cos(\theta)\\
+    \end{array}
+    \right]
+\end{equation*}
+
+Returning to geometric algebra, let us see what happens if we
+multiply vector $a$ with a complex number $B = \beta_1 + \beta_4I$
+to obtain:
+\begin{align*}
+    a'' &= aB \\
+        &= (\alpha_2e_1 + \alpha_3e_2)(\beta_1 + \beta_4I) \\
+        &= \alpha_2e_1(\beta_1 + \beta_4I) + \alpha_3e_2(\beta_1 + \beta_4I) \\
+        &= \alpha_2e_1\beta_1 + \alpha_2e_1\beta_4I + \alpha_3e_2\beta_1 + \alpha_3e_2\beta_4I  \\
+        &= \beta_1\alpha_2e_1 + \beta_4\alpha_2e_1I + \beta_1\alpha_3e_2 + \beta_4\alpha_3e_2I  \\
+        &= \beta_1\alpha_2e_1 + \beta_4\alpha_2e_1e_1e_2 + \beta_1\alpha_3e_2 + \beta_4\alpha_3e_2e_1e_2  \\
+        &= \beta_1\alpha_2e_1 + \beta_4\alpha_2e_2 + \beta_1\alpha_3e_2 - \beta_4\alpha_3e_1  \\
+        &= (\beta_1\alpha_2 - \beta_4\alpha_3)e_1 + (\beta_4\alpha_2 + \beta_1\alpha_3)e_2
+\end{align*}
+Thus we see that the geometric product of a complex number and a
+vector results in a vector with components:
+\begin{align}
+    \alpha_2'' &= \beta_1\alpha_2 + \beta_4\alpha_3 \nonumber\\
+    \alpha_3'' &= \beta_4\alpha_2 - \beta_1\alpha_3 \nonumber\\
+\end{align}
+
+Compare this with equations (\ref{eq:standard 2d rotation x}) and
+(\ref{eq:standard 2d rotation y}). If we take $\beta_1 =
+\cos(\theta)$ and a $\beta_4 = \sin(\theta)$ we can use complex
+numbers to do rotations, because then:
+\begin{align*}
+    \alpha_2' = \cos(\theta)\alpha_2 - \sin(\theta)\alpha_3 = \beta_1\alpha_2 - \beta_4\alpha_3 = \alpha_2'' \\
+    \alpha_3' = \sin(\theta)\alpha_2 + \cos(\theta)\alpha_3 = \beta_4\alpha_2 + \beta_1\alpha_3 = \alpha_3''
+\end{align*}
+
+At this point we no longer talk about complex numbers but we call
+$B$ a spinor. In general, spinors are $n$-dimensional rotators,
+and in $\mathcal{C}\ell_2$ they are represented by a linear
+combination of a scalar plus a bivector.
+
+Equation (\ref{eq:geometric_product_vectors}) says that the
+geometric product of two vectors is a scalar plus a bivector. So
+let's find a $p$ and $q$ that generate $B$:
+\begin{displaymath}
+    B = \beta_1 + \beta_4I = p\cdot q + p\wedge q = pq
+\end{displaymath}
+
+Traditional vector algebra tells us that the angle between two
+unit vectors can be expressed using the dot product, i.e. $p\cdot
+q = \cos(\theta)$. It also tells us that the magnitude of the
+cross product of two unit vectors is equal to the sine of the same
+angle, $|p \times q| = \sin(\theta)$.
+
+I already demonstrated that the cross product is related to the
+outer product through the dual. In fact, it turns out that the
+outer product between two unit vectors is exactly the sine of
+their angle times the basis bivector $I$. In other words:
+\begin{align*}
+    p\cdot q &= \cos(\theta)    \\
+    p\wedge q &= \sin(\theta)I
+\end{align*}
+A thorough proof can be found in Hestenes's New Foundations For
+Classical Mechanics \cite{bib:hestenes new foundations}. The
+consequence is that, because of equation
+(\ref{eq:geometric_product_vectors}), for unit vectors $p$ and
+$q$:
+\begin{displaymath}
+    pq = \cos(\theta) + \sin(\theta)I
+\end{displaymath}
+with $\theta$ being the angle between the two vectors.
+
+Concluding, a spinor in $\mathcal{C}\ell_2$ is a scalar plus a
+bivector. Its components correspond directly to the sine and
+cosine of the angle. The geometric product of two unit vectors
+generates a spinor.
+
+We can derive this in a similar way by creating the following
+identity:
+\begin{displaymath}
+    \frac{p}{q} = \frac{a'}{a}
+\end{displaymath}
+Which is not ambiguous, and can also be written as:
+\begin{displaymath}
+    pq^{-1} = a'a^{-1}
+\end{displaymath}
+ Basically, this says that ``what $p$ is to $q$, is $a'$ to
+ $a$.'' We can rewrite this to:
+\begin{displaymath}
+    a' = pq^{-1}a
+\end{displaymath}
+But the inverse of a unit vector is equal to itself, and thus:
+\begin{displaymath}
+    a' = \underbrace{pq}_{spinor}a
+\end{displaymath}
+
+If the spinor $pq$ represents a clockwise rotation, then $qp$
+represents a counter-clockwise rotation. This is thanks to the
+fact that the geometric product is not commutative or
+anticommutative. As a result it can convey more information
+removing much of the ambiguities of traditional methods where
+certain representations can only identify the rotation over the
+smallest angle.
+
+It's interesting to look at the rotation over $180$ degrees. We
+can do it by constructing a spinor out of the basis vector $e_1$
+and its negation $-e_1$. Obviously there is a $180$ degree angle
+between them. If we multiply them (see table \ref{tab:mul table
+2d} for a refresher), we get:
+\begin{displaymath}
+    e_1(-e_1) = -(e_1e_1) = -1
+\end{displaymath}
+which makes sense because a rotation over $180$ degrees reverses
+the signs. But this becomes more interesting if we do it through
+two successive rotations over $90$ degrees. A rotation by 90
+degrees is a multiplication with the basis bivector $I$. As an
+example, consider the following geometric products between the
+basis blades $e_1$, $e_2$ and $I$, taken directly from the
+multiplication table for $\mathcal{C}\ell_2$ as in figure
+\ref{tab:mul table 2d}.
+\begin{align}
+     Ie_1   &= -e_2       \nonumber \\
+     Ie_2   &=  e_1       \nonumber \\
+    I(-e_1) &=  e_2       \nonumber \\
+    I(-e_2) &= -e_1       \nonumber
+\end{align}
+
+Now doing two successive rotations:
+\begin{align*}
+    I^2e_1 &= I(Ie_1) = I(-e_2) = -e_1   \\
+    I^2e_2 &= I(Ie_2) = I(e_1) = -e_2
+\end{align*}
+This provides yet another demonstration that $I^2$ equals $-1$.
+But it also demonstrates how we can combine rotations. It turns
+out that, as our intuition dictates, that the geometric product of
+two rotations form a new rotation. This demonstrates that we can
+use the geometric product to concatenate rotations, and that
+spinors form a subgroup of $\mathcal{C}\ell_2$.
+
+To prove this we need to show that the multiplication of two
+spinors is another spinor. The general form of a spinor is a
+scalar and a bivector, so let's multiply:
+\begin{align*}
+    A = \alpha_1 + \alpha_4I \\
+    B = \beta_1  + \beta_4I
+\end{align*}
+Which is easy:
+\begin{align*}
+    AB &= (\alpha_1 + \alpha_4I)(\beta_1  + \beta_4I) \\
+       &= (\alpha_1 + \alpha_4I)\beta_1  + (\alpha_1 + \alpha_4I)\beta_4I \\
+       &= \alpha_1\beta_1 + \alpha_4\beta_1I  + \alpha_1\beta_4I + \alpha_4\beta_4II \\
+       &= \alpha_1\beta_1 + \alpha_4\beta_1I  + \alpha_1\beta_4I - \alpha_4\beta_4 \\
+       &= \underbrace{(\alpha_1\beta_1 - \alpha_4\beta_4)}_{\text{scalar part}} + \underbrace{(\alpha_4\beta_1 + \alpha_1\beta_4)I}_{\text{bivector part}}
+\end{align*}
+And we conclude, as expected, that the multiplication of two
+spinors results in a spinor in $\mathcal{C}\ell_2$.
+
+\subsection{Lines}
+
+Equation (\ref{eq:outer prod self zero}) told us that the outer
+product of a vector with itself equals zero. We can use this to
+construct a line through the origin at $(0, 0)$. For a given
+direction vector $u$ all points $x$ on the line satisfy:
+\begin{displaymath}
+    x\wedge u = 0
+\end{displaymath}
+The proof is easy if you realize that every $x$ can be written as
+a scalar multiple of $u$. For lines trough an arbitrary point $a$
+we can write the following:
+\begin{displaymath}
+    (x-a)\wedge u = 0
+\end{displaymath}
+We can rewrite this equation in several different forms:
+\begin{align}
+    (x-a)\wedge u &= 0                \nonumber \\
+    (x \wedge u) - (a\wedge u) &= 0   \nonumber \\
+    (x \wedge u) &= (a\wedge u)       \nonumber \\
+    (x \wedge u) &= U                 \nonumber
+\end{align}
+
+Where $u$ is the direction vector of the line and $U$ is the
+bivector $a\wedge u$. This is depicted in figure \ref{fig:2d
+line}.
+
+\begin{figure}[ht]
+\centering
+\input{2d_line.pstex_t}
+\caption{Lines in the Euclidian plane} \label{fig:2d line}
+\end{figure}
+
+Again, note that the bivector has no specific shape. It is only
+the area that indirectly defines the distance from origin to the
+line. If we want to calculate the distance directly, we need the
+vector $d$ as illustrated in figure \ref{fig:2d line}. We can
+calculate this vector easily by doing:
+\begin{displaymath}
+    d = \frac{U}{u}
+\end{displaymath}
+The magnitude of this vector will be the distance from the line to
+the origin. This is trivial to prove. From the above we see that
+\begin{displaymath}
+    du = U
+\end{displaymath}
+From equation (\ref{eq:geometric_product_vectors}) we can write:
+\begin{displaymath}
+    du = d\cdot u + d\wedge u = U
+\end{displaymath}
+But remember that $U$ is a bivector equal to $d\wedge u$ and that
+consequently $d\cdot u$ must be zero. Well, if the inner product
+of two vectors equals zero, they are perpendicular, and hence $d$
+is perpendicular to the line, and thus the shortest vector from
+the origin to the line.
+
+Things are even better if $u$ is a unit vector. In applications
+this is often the case, and it allows us to write $d = Uu$ because
+the inverse of a unit vector is the unit vector itself, hence $d =
+\frac{U}{u} = Uu^{-1} = Uu$. Even more so, in the case that $u$ is
+a unit vector, then $|U| = |d|$, exactly the distance from the
+origin to the line.
+
+\newpage
+\section{Euclidian Space}
+
+For those with an interest in computer graphics, the world of
+three dimensions is the most interesting of course. I will look at
+some common 3D operations and concepts, and show how they relate
+to traditional methods. However, we will learn about homogeneous
+space later, which deals with a four dimensional model of three
+dimensional space. This model provides significant advantages over
+$\mathcal{C}\ell_3$. Fortunately, most of the theory presented in
+this section will be presented in a dimension free manner, and can
+readily be applied there as well.
+
+\subsection{Rotations}
+
+When I discussed rotations in the Euclidian plane, I showed you
+that a spinor $\cos \theta + \sin \theta I$ rotates a vector over
+an angle $\theta$. I then showed that the geometric product of two
+unit vectors $s$ and $t$ generates a spinor because $s\cdot t =
+\cos \theta$ and $s\wedge t = \sin\theta I$.
+
+I will now prove that such a \emph{rotation in a plane} works for
+any dimension. After that I will extend it so we can do arbitrary
+rotations. Finally, we will see how this relates to a traditional
+method for rotations. You might be surprised.
+
+\subsubsection{Rotations in a plane}
+
+We will use a unit-bivector $B$ to define our plane of rotation.
+Given a vector $v$ lying in the same plane as the bivector, we
+want to rotate it over an angle $\theta$ into a vector $v'$.
+
+Using a spinor $R$ of the form $\cos \theta + \sin \theta B$, the
+proposition is:
+\begin{align}
+    v' = Rv
+    \label{eq:dimension free rotation in a plane}
+\end{align}
+We need to prove that $v'$ lies in the same plane as $B$ and $v$,
+by demonstrating that
+\begin{align}
+    v'\wedge B = 0
+    \label{eq:dimension free rotation requirement 1}
+\end{align}
+And we need to prove that the angle between $v$ and $v'$ equals
+$\theta$ by showing that the well known dot product equality
+holds:
+\begin{align}
+    v'\cdot v = |v'||v| \cos \theta
+    \label{eq:dimension free rotation requirement 2}
+\end{align}
+Note that nothing is said about the dimension of the space these
+vectors and bivector reside in. This makes sure our proof holds
+for any dimensions
+
+Let's start out by writing the spinor in full:
+\begin{align*}
+    v' &= (\cos \theta + \sin \theta B) v   \\
+       &= \cos \theta v + \sin \theta B v
+\end{align*}
+Because $v$ is a vector and $B$ is a bivector, we can write:
+\begin{align*}
+    v' &= \cos \theta v + \sin \theta (B\cdot v + B\wedge v)
+\end{align*}
+Because $v$ lies in the same plane as $B$, we know that $B\wedge v
+= 0$, resulting in:
+\begin{align*}
+    v' &= \cos \theta v + \sin \theta B\cdot v
+\end{align*}
+If you refer back to image \ref{fig:dot product vector bivector}
+you will see that the inner product between a vector and a
+bivector returns the complement of the projection. In this case
+$v$ is already in the bivector plane, and thus its own projection.
+The resulting complement $B\cdot v$ is a vector in the same plane,
+but perpendicular to $v$. We will denote this vector with
+$v_\bot$. This leads to the final result, which will allow us to
+prove (\ref{eq:dimension free rotation requirement 1}) and
+(\ref{eq:dimension free rotation requirement 2}):
+\begin{align*}
+    v' &= \cos \theta v + \sin \theta v_\bot
+\end{align*}
+The proof of (\ref{eq:dimension free rotation requirement 1}) is
+easy. If you look at the last equation, you will see that $v'$ is
+an addition of two vectors $v$ and $v_\bot$. Both these vectors
+are in the $B$ plane, and hence any addition of these vectors will
+also be in the same plane. Hence $v'\wedge B = 0$.
+
+Understanding the proof of (\ref{eq:dimension free rotation
+requirement 2}) will be easier if you to take a look at figure
+\ref{fig:rotation in plane}. There, I've depicted the three
+relevant vectors in the $B$ plane.
+\begin{figure}[ht]
+\centering
+\input{rotation_in_plane.pstex_t}
+\caption{Rotation in an arbitrary plane} \label{fig:rotation in
+plane}
+\end{figure}
+
+To recap, we need to show that:
+\begin{align*}
+    v'\cdot v = |v||v'| \cos \theta
+\end{align*}
+Vectors $v'$ and $v$ will have equal length. I won't prove this,
+hoping the picture will suffice. Using this, the equation becomes:
+\begin{align*}
+    v'\cdot v = |v|^2 \cos \theta
+\end{align*}
+Writing out $v'$ we get:
+\begin{align*}
+    (\cos \theta v + \sin \theta v_\bot)\cdot v = |v|^2 \cos \theta
+\end{align*}
+The dot product is distributive over vector addition:
+\begin{align*}
+    \cos \theta v\cdot v + \sin \theta v_\bot \cdot v = |v|^2 \cos \theta
+\end{align*}
+Because $v_\bot$ and $v$ are perpendicular, their dot product
+equals zero:
+\begin{align*}
+    \cos \theta v\cdot v = |v|^2 \cos \theta
+\end{align*}
+And finally, the dot product of a vector with itself is equal to
+its squared magnitude:
+\begin{align*}
+    \cos \theta |v|^2 = |v|^2 \cos \theta
+\end{align*}
+
+This concludes our proof that a spinor $\cos \theta + \sin \theta
+B$ rotates any vector in the $B$-plane over an angle $\theta$.
+Since we made no assumptions on the dimension anywhere, this shows
+that spinors work in any dimension. In the Euclidian Plane we
+didn't have much choice regarding the $B$-plane, because there is
+only one plane, but in three or more dimensions we can use any
+arbitrary bivector.
+
+Yet, the above only works when the vector we wish to rotate lies
+in the actual plane. Obviously we also want to rotate arbitrary
+vectors. I will now demonstrate how we can use reflections to
+achieve this in a dimension free way.
+
+\subsubsection{Arbitrary Rotations}
+
+Let's see what happens if we perform two reflections on any vector
+$v$. One using unit vector $s$ and then another using unit vector
+$t$:
+\begin{align*}
+    v' = -t(-svs)t = tsvst
+\end{align*}
+We will denote $st$ using $R$, and because it is a versor we can
+write $ts = (st)^\dagger = R^\dagger$:
+\begin{align*}
+    v' = R^\dagger v R
+\end{align*}
+Note that $R$ and $R^\dagger$ have the form:
+\begin{align*}
+    R         &= st = s\cdot t + s\wedge t \\
+    R^\dagger &= ts = s\cdot t - s\wedge t
+\end{align*}
+Hence, they are spinors -scalar plus bivector- and can be used to
+rotate in the $s\wedge t$ plane. It is the combination with the
+reverse that allows us to do arbitrary rotations, removing the
+restriction that $v$ has to lie in the rotation plane.
+
+Let's denote the plane of rotation that is specified by the
+bivector $s\wedge t$, with $A$. Now, decompose $v$ into a part
+perpendicular to $A$ and a part collinear with $A$:
+\begin{align*}
+    v = v_{||_A} + v_{\bot_A}
+\end{align*}
+Now the following relations hold:
+\begin{align*}
+    v_{||_A}A &= v_{||_A}\cdot A + \overbrace{v_{||_A}\wedge A}^{= 0}   \\
+              &= v_{||_A}\cdot A                                        \\
+              &= -A\cdot v_{||_A}                                        \\
+              &= -A\cdot v_{||_A} - A\wedge v_{||_A}                     \\
+              &= -Av_{||_A}
+\end{align*}
+It may be worth pointing out why $v_{||_A}\cdot A = -A\cdot
+v_{||_A}$. The inner product for vectors is commutative whereas
+the inner product between a vector and a bivector is
+anticommutative. It turns out that the sign of the commutativity
+depends on the grade of the blade. For vector $p$ and blade $Q$
+with grade $r$ we have:
+\begin{align*}
+    p\cdot Q = (-1)^{r+1}Q\cdot p
+\end{align*}
+I will not prove this here. It can be found in Hestenes New
+Foundations for Classical Mechanics \cite{bib:hestenes new
+foundations} as well as other papers.
+
+For the perpendicular part of $v$, we have:
+\begin{align*}
+    v_{\bot_A}A &= \overbrace{v_{\bot_A}\cdot A}^{= 0} + v_{\bot_A}\wedge A  \\
+                &= v_{\bot_A}\wedge A                                        \\
+                &= A\wedge v_{\bot_A}                                        \\
+                &= A\cdot v_{\bot_A} + A\wedge v_{\bot_A}                    \\
+                &= Av_{\bot_A}
+\end{align*}
+If you are confused by the fact that the outer product between a
+vector and a bivector turns out to be commutative, then remember
+that the outer product between a vector and a vector was
+anticommutative. Hence:
+\begin{align*}
+          v_{\bot_A}\wedge A &= v_{\bot_A}\wedge s \wedge t \\
+                             &= -s\wedge v_{\bot_A}\wedge t \\
+                             &= s\wedge t\wedge v_{\bot_A}  \\
+                             &= A\wedge v_{\bot_A}
+\end{align*}
+In fact, the commutativity of the outer product between a vector
+$p$ and a blade $Q$ with grade $r$ is related much like the inner
+product:
+\begin{align*}
+    p\wedge Q = (-1)^{r}Q\wedge p
+\end{align*}
+For this, the proof is easy. The sign simply depends on the amount
+of vector-swaps necessary, and hence on the number of vectors in
+the blade. This is directly related to the grade of the blade.
+
+Here's a quick recap of the identities we just established.
+\begin{align}
+    v_{||_A}A &= -Av_{||_A}         \label{eq:colinear with bivector is anti commutative} \\
+    v_{\bot_A}A &= Av_{\bot_A}      \label{eq:perpendicular with bivector is commutative}
+\end{align}
+We will now use these in the rest of the proof.
+\begin{align*}
+    R^\dagger v_{||_A} &= (s\cdot t - s\wedge t) v_{||_A}           \\
+                       &= (s\cdot t)v_{||_A} - (s\wedge t)v_{||_A}  \\
+                       &= (s\cdot t)v_{||_A} - Av_{||_A}
+\end{align*}
+The inner product $s\cdot t$ is just a scalar, and hence the
+geometric product $(s\cdot t)v_{||_A}$ is commutative. This, and
+equation (\ref{eq:colinear with bivector is anti commutative})
+allows us to write:
+\begin{align*}
+    R^\dagger v_{||_A} &= v_{||_A}(s\cdot t) + v_{||_A}A            \\
+                       &= v_{||_A}(s\cdot t) + v_{||_A}(s\wedge t)  \\
+                       &= v_{||_A}(s\cdot t + s\wedge t)            \\
+                       &= v_{||_A}R                                 \\
+\end{align*}
+In the same way, using (\ref{eq:perpendicular with bivector is
+commutative}) this time, we can write:
+\begin{align*}
+    R^\dagger v_{\bot_A} &= (s\cdot t - s\wedge t) v_{\bot_A}             \\
+                         &= (s\cdot t)v_{\bot_A} - (s\wedge t)v_{\bot_A}  \\
+                         &= (s\cdot t)v_{\bot_A} - Av_{\bot_A}            \\
+                         &= v_{\bot_A}(s\cdot t) - v_{\bot_A}A            \\
+                         &= v_{\bot_A}(s\cdot t) - v_{\bot_A}(s\wedge t)  \\
+                         &= v_{\bot_A}(s\cdot t - s\wedge t)              \\
+                         &= v_{\bot_A}R^\dagger
+\end{align*}
+To summarize the newly established identities:
+\begin{align}
+    R^\dagger v_{||_A} &= v_{||_A}R                     \label{eq:Rd v is v R} \\
+    R^\dagger v_{\bot_A} &= v_{\bot_A}R^\dagger         \label{eq:Rd v is v Rd}
+\end{align}
+
+We can now return to our original equation, stating that:
+\begin{align*}
+    v' = R^\dagger v R
+\end{align*}
+Decomposing $v$ and using (\ref{eq:Rd v is v R}) and (\ref{eq:Rd v is v Rd}) we get:
+\begin{align*}
+    v' &= R^\dagger (v_{||_A} + v_{\bot_A}) R               \\
+       &= R^\dagger v_{||_A} R + R^\dagger v_{\bot_A} R     \\
+       &= v_{||_A} RR + v_{\bot_A} R^\dagger R              \\
+\end{align*}
+Remember that $s$ and $t$ are unit vectors and hence:
+\begin{align*}
+    R^\dagger R &= tsst = 1
+\end{align*}
+This allows us to write:
+\begin{align*}
+    v' &= v_{||_A} RR + v_{\bot_A}
+\end{align*}
+Now, notice that we are multiplying the collinear part $v_{||_A}$
+by $R$ twice, and that the perpendicular part $v_{\bot_A}$ is
+untouched.
+
+Recall that $R$ was a scalar and a bivector and thus a spinor that
+rotates vectors in the bivector plane. Well, $v_{||_A}$ lies in
+that plane. This means that if we make sure that $R$ rotates over
+an angle $\frac{1}{2}\theta$, a double rotation will rotate over
+angle $\theta$. Thus the operation $R^\dagger v R$ does exactly
+what we want. This is illustrated in figure \ref{fig:rotation}.
+
+\begin{figure}[ht]
+\centering
+\input{rotation.pstex_t}
+\caption{An arbitrary rotation} \label{fig:rotation}
+\end{figure}
+
+It is worth mentioning that the dual of the $A$ plane, denoted by
+$A^*$, is obviously the normal to the plane, and hence the
+rotation axis.
+
+\subsubsection{Conclusion}
+
+If, by now, you think that rotations are incredibly complicated in
+geometric algebra you are in for a surprise. All of the above was
+just to prove that for any angle $\theta$ and bivector $A$, the
+spinor:
+\begin{displaymath}
+    R = \cos \frac{1}{2}\theta + \sin \frac{1}{2}\theta A
+\end{displaymath}
+can perform a rotation of an arbitrary vector relative to the $A$
+plane, by doing:
+\begin{displaymath}
+    v' = R^\dagger vR
+\end{displaymath}
+In other words, the spinor performs a rotation around the normal
+of the $A$ plane, denoted by the dual $A^*$. Best of all, spinors
+don't just work for vectors, but for any multivector. This means
+that we can also use spinors to rotate bivectors, trivectors or
+complete multivectors. For example, if we have a bivector $B$, we
+can rotate it by $\theta$ degrees around an axis $a$ or relative
+to a bivector $a^* = A$ by :
+\begin{align*}
+    B' &= R^\dagger BR   \\
+    B' &= (\cos\frac{1}{2}\theta - \sin\frac{1}{2}A)B(\cos\frac{1}{2}\theta + \sin\frac{1}{2}A)
+\end{align*}
+Proofs of this generalization of spinor theory can be found in
+most of the references.
+
+Now that we've seen the dimension free definition of spinors, and
+a proof on why they perform rotations, we can return to Euclidian
+space and see what it means in three dimensions.
+
+Recall the bivector representation in $\mathcal{C}\ell_3$. We used
+three basis bivectors $e_{12}$, $e_{13}$ and $e_{23}$ and denoted
+any bivector $B$ using a triplet $(\beta_1, \beta_2, \beta_3)$. If
+$B$ is a unit-bivector and introduce the $\gamma$ symbol for the
+scalar, then we can represent a spinor $R \in \mathcal{C}\ell_3$
+over an angle $\theta$ as follows:
+\begin{displaymath}
+    R = \underbrace{\cos \frac{1}{2} \theta}_{(\gamma, }  + \underbrace{\sin \frac{1}{2}\theta B}_{\beta_1, \beta_2,
+    \beta_3)}
+\end{displaymath}
+As you see, in three dimensions a spinor consists of four
+components. Now take a look at the following multiplications
+(taken from the sign table in figure (\ref{tab:mul table 3d})):
+\begin{align*}
+    e_{12}e_{12} &= e_{13}e_{13} = e_{23}e_{23} = -1    \\
+    e_{12}e_{13} &= -e_{23} \\
+    e_{13}e_{12} &= e_{23} \\
+    e_{12}e_{23} &= e_{13} \\
+    e_{23}e_{12} &= -e_{13} \\
+    e_{13}e_{23} &= -e_{12} \\
+    e_{23}e_{13} &= e_{12}
+\end{align*}
+And denote the basis bivectors $e_{12}$, $e_{23}$, $e_{13}$ using
+$i$, $j$ and $k$ respectively. We end up with:
+\begin{align*}
+    i^2 &= k^2 = j^2 = -1    \\
+    ik &= -j \\
+    ki &= j \\
+    ij &= k \\
+    ji &= -k \\
+    kj &= -i \\
+    jk &= i
+\end{align*}
+Allowing us to write a spinor $\in \mathcal{C}\ell_3$ as:
+\begin{align*}
+    R &= (w, xi, yj, zk)                \\
+    \text{\emph{where}}                 \\
+    w &= \cos \frac{1}{2} \theta        \\
+    x &=\sin \frac{1}{2} \theta \beta_1  \\
+    y &=\sin \frac{1}{2} \theta \beta_2  \\
+    z &=\sin \frac{1}{2} \theta \beta_3
+\end{align*}
+
+Hopefully this is starting to look familiar by now. Compare my
+definition of a spinor, including the way $i$, $j$ and $k$
+multiply, with any textbook on quaternions and you will easily see
+the resemblance. In fact, in three dimensions, spinors are exactly
+quaternions. A quaternion rotation is exactly a vector sandwiched
+in between the quaternion and its inverse. But because we are
+using unit-quaternions (or unit-spinors) the inverse is the same
+as the reverse.
+
+Don't assume that all of this is a coincidence, or merely a
+striking resemblance. Quaternions and spinors are exactly the
+same:
+\begin{center}
+\textbf{\emph{A quaternion is a scalar plus a bivector}}
+\end{center}
+Apart from the fact that quaternions have four components, there
+is nothing four-dimensional or imaginary about a quaternion. The
+first component is a scalar, and the other three components form
+the bivector-plane relative to which the rotation is performed.
+
+If you would look at the conversion from an axis-angle
+representation to a quaternion, you would see that the angle is
+divided by two. This makes sense now, because the spinor rotates
+the collinear part of a vector twice. Also, the conversion takes
+the dual of the axis and multiplies it by $\sin \frac{1}{2}
+\theta$ to create exactly the bivector we need. If you would write
+out the geometric product of two spinors, you would notice that it
+is exactly the same as a quaternion multiplication. Finally, the
+inverse of a spinor (w, x, y, z) is (w, -x, -y, -z) which follows
+from the fact that the inverse rotates over the opposite angle
+combined with the fact that $\cos(-\theta) = \cos \theta$ yet
+$\sin(-\theta) = -\sin \theta$.
+
+Spinors may be quaternions in 3D, but geometric algebra has given
+us much more:
+\begin{itemize}
+    \item There is nothing four dimensional or imaginary to a
+    quaternion. It is simply a scalar plus a real bivector. This
+    gives us a way to actually visualize quaternions. Compare this
+    to the many failed attempts to draw four dimensional unit
+    hyperspheres in textbook examples on quaternions.
+    \item Spinors rotate more than just vectors. They can rotate
+    bivectors, trivectors, $n$-blades and any multivector. If you
+    ever tried rotating the normal of plane, you will readily
+    appreciate the ability to rotate the plane directly.
+    \item Unlike quaternions, spinors are dimension-free and
+    work just as well in 2D, 4D and any other dimension. Their
+    theory extends to any space without changes.
+\end{itemize}
+
+\subsubsection{Back to Reflections}
+
+At the start of this section we combined two reflections to
+generate a rotation. Let's look at that again, to get another way
+of looking at rotations. So, we perform two reflections on any
+vector $v$. One using unit vector $s$ and then another using unit
+vector $t$:
+\begin{align*}
+    v' = -t(-svs)t = tsvst
+\end{align*}
+We denoted $st$ using $R$ and $ts$ using $R^\dagger$ and worked
+with those from then. Instead, we will now look at what those two
+reflections do in a geometric interpretation. This is illustrated
+in figure \ref{fig:rotation reflection} using a top down view.
+
+\begin{figure}[ht]
+\centering
+\input{rotation_reflection.pstex_t}
+\caption{A rotation using two reflections} \label{fig:rotation
+reflection}
+\end{figure}
+
+In this figure, we reflect $v$ in the plane perpendicular to $s$
+to obtain vector $v''$. Then we reflect that vector in the plane
+perpendicular to $t$ to obtain the final rotated vector $v'$.
+
+We can actually easily prove this by adding a few angles. We will
+measure the angles using the bivector dual of $s$ as the frame of
+reference. Then we denote the angle of vector $v$ as $\theta(v)$.
+Thus, if we reflect $v$ in this bivector dual we obtain vector
+$v''$ with an angle of $\theta(v'') = -\theta(v)$. Then we mirror
+this vector $v''$ in the bivector dual of $t$ to obtain an angle
+$\theta(v')$ equal to:
+\begin{align*}
+    \theta(v') &= \theta(t) + \theta(t) - \theta(v'') \\
+               &= \theta(t) + \theta(t) + \theta(v) \\
+               &= 2\theta(t) + \theta(v)
+\end{align*}
+
+This proves that the angle between $v$ and $v'$ is twice the angle
+between $s$ and $t$. That this works for vectors even outside of
+the $s\wedge t$ plane is left as an exercise for the reader. Also,
+try to convince yourself that reflecting in $t$ followed by $s$ is
+precisely the opposite rotation over the angle $-\theta$.
+
+\newpage
+
+\subsection{Lines}
+
+We've discussed lines before when we looked at the Euclidian
+plane. The interesting thing is that no reference to any specific
+dimension was made. As a result, we can use the same equations to
+describe a line in 3D. That is, for a line through point $a$ with
+direction-vector $u$, every point $x$ on that line will satisfy
+all of the following:
+\begin{align*}
+    (x-a)\wedge u &= 0                \nonumber \\
+    (x \wedge u) - (a\wedge u) &= 0   \nonumber \\
+    (x \wedge u) &= (a\wedge u)       \nonumber \\
+    (x \wedge u) &= U                 \nonumber
+\end{align*}
+Where $U$ is the bivector $a\wedge u$. Also, the shortest distance
+from the origin is again given by vector $d = \frac{U}{u}$. The
+short proof given in the previous section on lines is still valid.
+Again, if $u$ is a unit vector, then $d = Uu$ because $u^{-1} =
+u$.
+
+\subsection{Planes}
+
+Talking about planes in the Euclidian plane wasn't very useful as
+there is only one plane. In three dimensions, things are more
+interesting. Of course, the concept we use to model a plane should
+not come as a surprise. We've been using it implicitly in our talk
+about rotations already. We can model a plane by using a bivector.
+That is, any point $x$ on the plane will satisfy:
+\begin{align*}
+    x\wedge B &= 0
+\end{align*}
+Remember that the outer product between a bivector and a vector
+collinear with the bivector will equal zero, and the above will be
+obvious. If we wish to describe a plane through a point $a$, we
+can use the following:
+\begin{align*}
+    (x-a)\wedge B &= 0
+\end{align*}
+Compare this with the equations for describing a line. It's
+interesting to see that the outer product with a vector describes
+a line, and the outer product with a bivector describes a plane.
+
+In three dimensions the equation above requires six components.
+Three for bivector $B$, and three for vector $a$. Fortunately, we
+can rewrite it, so it requires four components, comparable to the
+traditional way of storing a plane where you use the normal and
+the shortest distance to the origin. It's as follows:
+\begin{align*}
+    (x-a)\wedge B         &= 0 \\
+    x\wedge B - a\wedge B &= 0 \\
+        x\wedge B &= a\wedge B \\
+        x\wedge B &= U
+\end{align*}
+Notice that the part on the right side is a trivector (denoted by
+$U$). In 3D trivectors are represented by just one scalar,
+allowing us to store a plane using four components. This scalar
+represents the volume of the pyramid spanned by bivector $B$ and
+the origin. In most applications, we can easily makes sure that
+$B$ is a unit-bivector. The consequence is that the scalar is
+exactly the distance from the origin to the plane.
+
+\newpage
+
+\section{Homogeneous Space}
+
+So far, we have used a point on a plane and point on a line to
+characterize the actual position of the plane and line in the
+Euclidian Plane and Space. For example, to describe a plane in
+three dimensions we needed a bivector to define its orientation
+and a coordinate-vector to define its position. In this section,
+we will embed an $n$-dimensional space in a higher
+$n+1$-dimensional space. This builds upon the traditional
+homogeneous model and it will enable us to use pure blades to
+describe elements from the $n$-space without the need for a
+supporting position.
+
+\subsection{Three dimensional homogeneous space}
+
+Let's look at the Euclidian plane and embed it in a three
+dimensional space. All we have to do is extend our vector basis
+${e_1, e_2}$ with a third unit vector $\emph{e}$ that is
+perpendicular to the other two:
+\begin{align*}
+        e_1\cdot e_2 &= 0   \\
+        e_1\cdot e &= 0     \\
+        e_2\cdot e &= 0     \\
+        e_1\cdot e_1 = |e_1| &= 1   \\
+        e_2\cdot e_2 = |e_2| &= 1   \\
+        e\cdot e = |e| &= 1
+\end{align*}
+
+We will then describe every coordinate $(x, y)$ in the euclidian
+plane as $(\frac{x}{w}, \frac{y}{w}, \frac{w}{w})$. More commonly
+we make sure that $w$ equals one so we can simply write $(x, y,
+1)$. By doing this, we have effectively taken the origin $(0, 0)$
+and placed it a dimension higher. This means that the origin is no
+longer a special case, allowing us to do \emph{positional
+geometry} in easier ways, without the need for supporting
+coordinates.
+
+\subsubsection{Lines}
+
+Let's construct the line through points $P$ and $Q$. Instead of
+taking the direction vector $P-Q$ and a supporting coordinate $P$
+or $Q$, we can simply take the bivector $P\wedge Q$ and that's it.
+This is shown in figure \ref{fig:homogeneous line}. The resulting
+bivector uniquely defines the line through $P$ and $Q$ and
+conversely $Q\wedge P$ defines the line with opposite direction.
+
+Recall that a bivector has no shape, only orientation and area.
+Hence, figure \ref{fig:homogeneous line} displays three possible
+representations for the bivector $P\wedge Q$ which are all the
+same, and all define the same line. Simply put, the bivector
+defines a plane, and the intersection of the plane with the
+Euclidian plane (depicted with the dashed plane) defines the line.
+
+\begin{figure}[ht]
+\centering
+\input{homogeneous_line.pstex_t}
+\caption{A two dimensional line in the homogeneous model}
+\label{fig:homogeneous line}
+\end{figure}
+
+The question is what this representation buys us. First, we can
+transform lines a lot easier now. For example, instead of having
+to rotate two entities (the position vector and the direction
+vector) we simply rotate the bivector.
+
+Another benefit shows up when we want to calculate the
+intersection point of two lines. This is where the meet operator
+becomes incredibly useful. Let's look at two lines in the
+homogeneous model, and see what their meet results in. We have a
+line through points $P$ and $Q$ defined by the bivector $P\wedge
+Q$, and a line through points $N$ and $M$ defined by the bivector
+$N\wedge M$. The intersection point will be exactly at:
+\begin{align*}
+    (P\wedge Q)\cap (N\wedge M) = (P\wedge Q)^* \cdot (N\wedge M)
+\end{align*}
+Instead of proving this, I will give a numerical example. Let's
+suppose our coordinates are:
+\begin{align*}
+    P &= (2, 0, 1) = 2e_1 + 0e_2 + 1\emph{e}\\
+    Q &= (2, 4, 1) = 2e_1 + 4e_2 + 1\emph{e}\\
+    N &= (0, 2, 1) = 0e_1 + 2e_2 + 1\emph{e}\\
+    M &= (4, 2, 1) = 4e_1 + 2e_2 + 1\emph{e}
+\end{align*}
+\begin{figure}[ht]
+\centering
+\input{homogeneous_intersection.pstex_t}
+\caption{An homogeneous intersection} \label{fig:homogeneous
+intersection}
+\end{figure}
+This is shown in figure \ref{fig:homogeneous intersection}.
+Obviously we can already reason that the intersection of the two
+lines is at $(2, 2, 1)$. The bivectors that correspondingly define
+the lines are:
+\begin{align*}
+    P\wedge Q &= (2, 0, 1) \wedge (2, 4, 1)  \\
+    N\wedge M &= (0, 2, 1) \wedge (4, 2, 1)
+\end{align*}
+We use equation (\ref{eq:wedge in 3d}) to calculate the
+actual bivectors:
+\begin{align*}
+    P\wedge Q = (&2\cdot 4 - 2\cdot 0, \\
+                 &2\cdot 1 - 2\cdot 1, \\
+                 &0\cdot 1 - 4\cdot 1) = (8, 0, -4) \\
+    N\wedge M = (&0\cdot 2 - 4\cdot 2, \\
+                 &0\cdot 1 - 4\cdot 1, \\
+                 &2\cdot 1 - 2\cdot 1) = (-8, -4, 0)
+\end{align*}
+It is worth stressing that the bivector triplets are again linear
+combinations of the basis bivectors. However, instead of the basis
+vector $e_3$ we use the special symbol vector $\emph{e}$. This
+creates the following bivectors:
+\begin{align*}
+P\wedge Q = ( 8,  0, -4) &=  8e_{12} + 0(e_1\wedge \emph{e}) - 4(e_2\wedge \emph{e}) \\
+N\wedge M = (-8, -4,  0) &= -8e_{12} - 4(e_1\wedge \emph{e}) + 0(e_2\wedge \emph{e})
+\end{align*}
+With these two definitions of the lines trough $P$ and $Q$ and
+trough $N$ and $M$ we can use the meet operator to find their
+intersection. First we calculate the dual of $P\wedge Q$ using
+equation (\ref{eq:dual in 3d}):
+\begin{align*}
+    (P\wedge Q)^* &= (8, 0, -4)^*   \\
+                  &= (-4, 0, 8)     \\
+                  &= -4e_1 + 0e_2 + 8\emph{e}
+\end{align*}
+Now to complete the meet operator:
+\begin{align*}
+    (P\wedge Q)^* \cdot (N\wedge M) &= (8, 0, -4)^* \cdot (-8, -4, 0)  \\
+                  &= (-4, 0, 8) \cdot (-8, -4, 0)
+\end{align*}
+It is important to realize that the right hand side of the inner
+product is a bivector and not a vector. Thus, we have the inner
+product between a vector (on the left hand side) and a bivector.
+We will use the earlier definition of the contraction
+inner-product to calculate this. To be precise, we employ
+definition (\ref{eq:recursive inner}). The meet of the two lines
+is:
+\begin{align*}
+    (P\wedge Q)^* \rfloor (N\wedge M) &= ((P\wedge Q)^*\rfloor N) \wedge M - N\wedge((P\wedge Q)^*\rfloor M)
+\end{align*}
+Now we notice two inner products between vectors, which we know
+how to calculate. They will result in scalars. Then we are left
+with outer products between scalars and bivectors. As it happens
+to be, the outer product of a scalar and a bivector is simply the
+intuitive scalar product. Hence, we calculate:
+\begin{align*}
+    ((-4, 0, 8)\rfloor (0, 2, 1)) \wedge (4, 2, 1) &- (0, 2, 1) \wedge((-4, 0, 8)\rfloor (4, 2, 1)) = \\
+    8\wedge (4, 2, 1) &- (0, 2, 1)\wedge -8 = \\
+    (32, 16, 8) &- (0, -16, -8) = \\
+                &(32, 32, 16)
+\end{align*}
+Now remember that in homogeneous space every coordinate is defined
+as $(\frac{x}{w}, \frac{y}{w}, w)$, hence the intersection point
+of the two lines is:
+\begin{align*}
+    (\frac{32}{16}, \frac{32}{16}, \frac{16}{16}) = (2, 2, 1)
+\end{align*}
+Which obviously, and according to figure \ref{fig:homogeneous
+intersection}, is correct.
+
+The complete calculation we just did is rather verbose and not
+something you would usually do. Instead, we just accept the meet
+operator and its definition using the inner product and the dual
+operator. Using the meet we can simply denote the intersection of
+two lines using the $\cap$ symbol.
+
+\subsection{Four dimensional homogeneous space}
+
+We have used a three dimensional space to model the Euclidean
+plane. We will now use $\mathcal{C}\ell_4$ to embed Euclidian
+space. Once again, we use a fourth basis vector $\emph{e}$
+orthogonal to the other three basis vectors $e_1$, $e_2$ and
+$e_3$. All coordinates $(x, y, z)$ will be denoted using
+$(\frac{x}{w}, \frac{y}{w}, \frac{z}{w}, \frac{w}{w})$. Again, if
+$w$ equals one we can write $(x, y, z, 1)$.
+
+\subsubsection{Lines in 4D homogeneous space}
+
+Constructing a line in this model is no different than we did
+before. For a line through points $P$ and $Q$ we take the outer
+product to construct a bivector that uniquely defines the line in
+three dimensions. It's rather complicated to depict this in a
+figure since we have no means to effectively display a four
+dimensional space. Fortunately, the same rules still apply. If we
+want to rotate a line we use a spinor. Of course such a spinor
+would now be a spinor in $\mathcal{C}\ell_4$. Also, if we want the
+intersection of two lines we simply take the meet of the two
+bivectors.
+
+Let us take a brief moment to look at the bivector representation
+in the homogeneous model. As discussed before, there are six basis
+bivectors in $\mathcal{C}\ell_4$. Instead of the basis vector
+$e_4$ we have the special basis vector $\emph{e}$. This creates
+the following set of basis bivectors:
+\begin{align*}
+            e_1\wedge e_2 &= e_{12} \\
+            e_1\wedge e_3 &= e_{13} \\
+            e_2\wedge e_3 &= e_{23} \\
+            e_1\wedge \emph{e}\;\: &    \\
+            e_2\wedge \emph{e}\;\: &   \\
+            e_3\wedge \emph{e}\;\: &
+\end{align*}
+Thus, in a four dimensional geometric algebra, a bivector forms a
+linear combination of the six basis bivectors. Hence we need six
+components to define a three dimensional line. As it turns out,
+these six scalars are what other theories commonly refer to as
+Pl\"uckerspace coordinates. However, the only thing that is
+six-dimensional about Pl\"uckerspace is the fact that we use six
+scalars. Everything becomes much more intuitive once we realize
+that in the four dimensional homogeneous model bivectors define
+lines and arbitrary bivectors are linear combinations of the six
+basis bivectors. In fact, the well known Pl\"uckerspace operations
+to define relations among lines can be expressed in terms of the
+\emph{meet} and the related \emph{join} operator which defines the
+union of two subspaces. Unfortunately, a more detailed discussion
+of the join and meet operators is beyond this paper.
+
+\subsubsection{Planes}
+
+Lines are defined by two coordinates, and we can express them by
+taking the outer product of the two coordinates. We can easily
+extend this. Planes are defined by three coordinates, and the
+homogeneous representation of a plane is simply the outer product
+of these three points. For example, the plane through points $P$,
+$Q$ and $R$ is defined by the trivector:
+\begin{displaymath}
+    P\wedge Q\wedge R
+\end{displaymath}
+For example, given a triangle defined by those three points there
+is no need to calculate the edge vectors to perform a cross
+product, after which the distance to the origin still needs to be
+calculated. We simply take the outer product of the three vertices
+to obtain the bivector which defines the plane.
+
+As with lines before, transforming the plane can simply be done by
+transforming the associated trivector. And not surprising, and
+very elegantly, the intersection of two planes or the intersection
+of a plane and a line can simply be done using the meet operator.
+The actual proof is beyond this paper, but trying out some
+numerical examples yourself should easily convince you that the
+meet operator does not discriminate among subspaces.
+
+\subsection{Concluding Homogeneous Space}
+
+Traditional Euclidian vector algebra always uses a supporting
+position vector to define the location of elements in space. This
+complicates all calculations since they have to act on two
+separate concepts (position and orientation) instead of just one.
+Furthermore, because the origin is treated as a special kind of
+position vector, we often run into special cases and exceptions in
+our algorithms.
+
+Homogeneous space allows us to use $k$-blades in an
+$n$-dimensional space to define positional $(k-1)$-blades in an
+$(n-1)$-dimensional space. This greatly simplifies our algorithms
+and it gives us the ability to reason about subspaces without the
+need for special cases or exceptions.
+
+At first sight, this elegance and ease of use comes with a
+considerable overhead; namely the extra storage required for the
+added dimension. However, at a second glance we notice that it's
+not entirely true.
+
+A vector takes three components in $\mathcal{C}\ell_3$ and four in
+$\mathcal{C}\ell_4$. However, most often the last scalar is equal
+to one and could be optimized away. There does not seem to be much
+need for this though. The advantages of homogeneous vectors have
+already been acknowledged in many traditional applications. An
+obvious example is matrix-algebra where four-by-four matrices are
+used to store rotations and translations combined.
+
+In $\mathcal{C}\ell_4$ a bivector takes six scalars, and a
+trivector takes four scalars. Refer back to figure \ref{tab:Basis
+blades in $4$ dimensions} for a reminder. We've used a bivector to
+represent a line, and a trivector to represent a plane. The amount
+of components required is therefore exactly the same as it would
+be in Euclidian space. There, we use two three-component vectors
+to represent a line, and four scalars to represent a plane.
+
+Admittedly, the homogeneous model is not optimal in all cases.
+There are certain operations and algorithms where a traditional
+approach is more suitable and other contexts where the homogeneous
+model is advantageous. Geometric algebra allows us to use both
+models alongside each other and use the one that best fits the
+situation.
+
+\chapter{Conclusion}
+
+Geometric Algebra introduces two new concepts. First, it
+acknowledges that a vector is a one-dimensional subspace and hence
+that there should be higher-dimensional subspaces as well. It then
+defines bivectors, trivectors and $k$-blades as the generalization
+of subspaces. Multivectors are linear combinations of several
+blades of different grades.
+
+Secondly, it defines the geometric product for multivectors.
+Because the geometric product embodies both the inner and outer
+product it combines the notion of orthogonality and collinearity
+into one operation. Combined with the fact that the geometric
+product gives most multivectors an inverse it becomes an extremely
+powerful operator capable of expressing many different geometric
+relations and ideas.
+
+Using blades and multivectors and the inner, outer and geometric
+product we can build up a set of tools consisting of the dual,
+inverses, projections and rejections, reflections, the meet and
+potentially much more.
+
+The fundamentals and the tools give us new ways of defining common
+elements like lines and planes. Both in traditional models and in
+the homogeneous model. It also gives us new ways to reason about
+the relations between elements.
+
+Furthermore, geometric algebra provides the full background for
+quaternion theory, finally demonstrating that there is nothing
+four-dimensional about them. Instead, they are just a linear
+combination of a scalar and a bivector. It also explains
+Pl\"uckerspace in terms of the homogeneous model and the join and
+meet operators.
+
+Best of all, the entire theory is independent of any dimension.
+This allows us to provide independent proofs and algorithms that
+can be applied to any situation. In fact, it is often intuitive to
+sketch a proof in a lower dimension and then extend it to the
+general case. Geometric algebra greatly simplifies this process.
+
+Still, it is not just the mere elegance and power of geometric
+algebra that makes it interesting, but it is the simple fact that
+we don't lose any of our traditional methods. Geometric algebra
+explains and embraces them, and then enriches and unifies those
+existing theories into one.
+
+\section{The future of geometric algebra}
+
+Currently, there are two major obstacles that prohibit the
+mainstream acceptance of geometric algebra as the language of
+choice.
+
+First of all, the learning curve for geometric algebra is too
+steep. Existing introductory material assumes the reader has a
+certain mathematical knowledge that many doing geometry in
+practical environments lack. Furthermore, old habits die hard. So
+instead of presenting geometric algebra as a replacement of
+traditional methods, it should simply be a matter of language.
+Geometric algebra is a language to express old and new concepts in
+easier ways. Hopefully this paper succeeded in providing a
+relatively easy introduction and demonstrating that it can explain
+and expand on existing theories.
+
+Secondly, there is still a lot of work to be done when it concerns
+implementations and applications. Even though geometric algebra
+looks promising for computational geometry at first sight, it
+turns out that a mapping from theory to practice is not as
+straightforward as one would hope. Obviously the old methods and
+theories have been used in practice for years and have undergone
+severe tweaking and tuning. Geometric algebra still has a long way
+to go before we will see implementations that allow us to benefit
+from the theoretical expressiveness and elegance without
+sacrificing performance. At the moment it is best used in theory,
+after which actual implementations give up on the generality and
+simply provide specialized algorithms for specific problem
+domains.
+
+Fortunately, there are several initiatives to work on this second
+obstacle. The first is a library by Daniel Fontijne, Leo Dorst and
+Tim Bouma called Gaigen \cite{bib:gaigen}. This library comes in
+the form of a code generator that generates optimized code given a
+certain algebra signature. Another initiative is the Clifford
+library \cite{bib:suter c++ implementation} which uses meta
+programming techniques to transform generic function calls into
+specialized and optimized implementations.
+
+\section{Further Reading}
+
+This paper merely tries to provide a simple introduction to
+geometric algebra and some of its applications. Hopefully it gives
+the reader a small foundation on which to pursue more detailed and
+thorough material.
+
+I can strongly recommend reading chapters one, two and five of
+Hestenes' \emph{New Foundations for Classical Mechanics}
+\cite{bib:hestenes new foundations}, which is still considered the
+best and most intuitive introduction to geometric algebra by many.
+All of the material on Leo Dorst's website \cite{bib:dorst
+website} is very informative and useful, especially the two papers
+published in the IEEE Computer Graphics and Applications
+\cite{bib:dorst part 1} \cite{bib:dorst part 2}. Finally, the
+material on Hestenes' website \cite{bib:hestenes website} provides
+some rather advanced, but useful, material. Especially the
+\emph{Old Wine in New Bottles} paper which introduces a new and
+very elegant model called the conformal split. If you wonder why
+planes are spheres through infinity and how this can be useful,
+this \cite{bib:hestenes old wine} is the paper to read.
+
+\begin{thebibliography}{99}
+
+\bibitem{bib:dorst honing geometric algebra}
+    Leo Dorst, \emph{Honing geometric algebra for its uses in the computer
+    sciences}, http://carol.wins.uva.nl/\~{}leo/clifford/sommer.pdf,
+    published in \emph{Geometric Computing with Clifford Algebras}, ed. G. Sommer,
+    Springer 2001, Section 6, pp. 127-152
+\bibitem{bib:dorst part 1}
+    Leo Dorst, Stephen Mann, \emph{Geometric Algebra: a computational \\
+    framework for geometrical applications (part 1: algebra)}, \\
+    http://www.science.uva.nl/\~{}leo/clifford/dorst-mann-I.pdf,
+    published in \emph{IEEE Computer Graphics and Applications May/June
+    2002}
+\bibitem{bib:dorst part 2}
+    Leo Dorst, Stephen Mann, \emph{Geometric Algebra: a computational \\
+    framework for geometrical applications (part 2: applications)}, \\
+    http://www.science.uva.nl/\~{}leo/clifford/dorst-mann-II.pdf,
+    published in \emph{IEEE Computer Graphics and Applications
+    July/August 2002}
+\bibitem{bib:dorst talk new}
+    Leo Dorst, \emph{Geometric (Clifford) Algebra: a practical tool for efficient geometrical
+    representation},\\
+    http://carol.wins.uva.nl/\~{}leo/clifford/talknew.pdf, 1999
+\bibitem{bib:leo dorst inner products}
+    Leo Dorst, \emph{The inner products of geometric algebra}, Applications of
+    Geometric Algebra in Computer Science and Engineering (Dorst,
+    Doran, Lasenby, eds), Birkhauser, 2002, \\
+    http://carol.wins.uva.nl/\~{}leo/clifford/inner.ps
+\bibitem{bib:dorst website}
+    Leo Dorst, \emph{Geometric algebra (based on Clifford algebra)},
+    \\http://carol.wins.uva.nl/\~{}leo/clifford/
+\bibitem{bib:hestenes clifford algebra}
+    David Hestenes and Garret Sobcyk, \emph{Clifford Algebra to Geometric
+    Calculus: A Unified Language for Mathematics and Physisc}, Kluwer Academic
+    Publishing, Dordrecht, 1987
+\bibitem{bib:hestenes new foundations}
+    David Hestenes, \emph{New Foundations For Classical Mechanics,
+    Kluwer Academic Publishing}, Dordrecht, 1986
+\bibitem{bib:hestenes old wine}
+    David Hestenes, \emph{Old Wine in New Bottles: A new algebraic
+    framework for computational geometry}, \\http://modelingnts.la.asu.edu/pdf/OldWine.pdf
+\bibitem{bib:hestenes website}
+    David Hestenes, \emph{Geometric Calculus - Research And Development}, \\http://modelingnts.la.asu.edu/
+\bibitem{bib:gaigen}
+    Daniel Fontijne, Leo Dorst, Tim Bouma, \emph{Gaigen - a
+    Geometric Algebra Library}, \\http://carol.wins.uva.nl/\~{}fontijne/gaigen/
+\bibitem{bib:suter c++ implementation}
+    Jaap Suter, \emph{Clifford - An efficient Geometric Algebra library using Meta
+    Programming},\\
+    http://www.jaapsuter.com
+\bibitem{bib:lots of inner products}
+    Ian C. G. Bell, \emph{Multivector Methods},\\
+    http://www.iancgbell.clara.net/maths/geoalg1.htm, 1998
+\bibitem{bib:chris doran thesis}
+    Chris J. L. Doran, \emph{Geometric Algebra and its
+    Applications to Mathematical Physics}, Sidney Sussex College, University of Cambridge,
+    1994, \\
+    http://www.mrao.cam.ac.uk/\~{}clifford/publications/abstracts/chris\_thesis.html
+\bibitem{bib:cambridge website}
+    University of Cambridge, \emph{The Geometric Algebra Research Group},
+    \\http://www.mrao.cam.ac.uk/\~{}clifford
+
+\end{thebibliography}
+
+
+
+\end{document}

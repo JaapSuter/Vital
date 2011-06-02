@@ -1,0 +1,226 @@
+<P><STRONG>Implementation remarks of Boost::Clifford proof of concept.</STRONG></P>
+<P>Note, this text is just thrown together really quickly to give you at least an 
+	idea why this library is different from others. I am working on a paper that is 
+	soon to be published (somewhere, don't know where yet) that gives more details 
+	on the implementation, as well as some performance comparisons. For now, I just 
+	hope this text gets the idea across...</P>
+<P><STRONG>Previous work</STRONG></P>
+<P>
+	There are only a few existing Geometric Algebra implementations. There is <A href="http://math.tntech.edu/rafal/cliff3/">
+		CLIFFORD</A> for MapleV, <A href="http://www.science.uva.nl/~leo/GABLE/index.html">
+		GABLE</A>&nbsp;for MatLab, and in C++ we have <A href="http://carol.wins.uva.nl/~fontijne/gaigen/">
+		GAIGEN</A>, <A href="http://www.perwass.de/cbup/clu.html">CLU</A>, <A href="http://www.nklein.com/products/geoma/">
+		nKlein</A> and <A href="http://glucat.sourceforge.net">GluCat</A> . I will 
+	not discuss the implementations from other languages. For those interested, I 
+	suggest taking a look at <A href="ftp://cs-archive.uwaterloo.ca/cs-archive/CS-99-27/">
+		The Making of a Geometric Algebra Package in Matlab</A>, which has some 
+	nice details about GABLE.
+</P>
+<P>The C++ implementations are all implemented in similiar ways. They define a 
+	generic multivector type based on a given algebra dimension and signature. 
+	Gaigen does this by using an external code-generation tool and runtime 
+	parametrization, CLU does it by runtime parametrization, and nKlein utilizes 
+	template to achieve compile-time genericity. Finally, GluCat&nbsp;combines 
+	runtime parametrization with templates to achieve genericity.</P>
+<P>My actual paper will do more justice to the quality of these&nbsp;four 
+	libraries, because I cannot deny that all&nbsp;four are excellent pieces of 
+	software engineering. In fact, I imitated many of the great ideas from these 
+	libraries. Here, I will only focus on the drawbacks, and propose my solution.</P>
+<P>1. nKlein</P>
+<P>The main problem with nKlein is that the multivector type stores all components. 
+	This means that for G^8 (the algebra of Euclidian R^3) all multivectors take up 
+	8 floats (or another scalar type). Even a simple vector which could be 
+	described by just 3 scalars, takes up 8 scalars. Clearly, this is unacceptable. 
+	But it gets worse. As&nbsp;a concequence, a full geometric product will be 
+	performed for everything, even if it's done just between two blades. This means 
+	that the geometric product between a scalar and a vector in G^8 will take up 64 
+	multiplies and additions. Again, this is unacceptable.</P>
+<P>2. CLU</P>
+<P>CLU tries to be more efficient by introducing the notion of bladelists. Each 
+	multivector stores a list of blades it contains, and thus saves on storage. 
+	Also, the geometric product takes these bladelists in account and only 
+	calculates those products relevant for the result. However, this results in two 
+	other drawbacks. First of all, there are dynamic allocations involved, because 
+	a multivector contains a dynamic list of blades. Secondly, the geometric 
+	product has to perform conditional loops based upon the contents of the 
+	bladelists. The loops are not so bad per se, but the conditionals therein are 
+	less than optimal.
+</P>
+<P>3. Gaigen</P>
+<P>Gaigen works a lot like CLU. However, unlike CLU it is a external 
+	code-generator, which means it can optimize by generating special cases. It 
+	tries to solve CLU's first problem by giving the user several options for blade 
+	storage. Blades can be stored using the max-allocation (same as nKlein, full 
+	multivectors), or tight (only what's neccesary at any time) or something in 
+	between. In my opinion this doesn't really solve the problem, but gives us the 
+	option between choosing either the drawback of nKlein (multivectors are too 
+	large), or CLU (dynamic allocations too often). The second problem is solved by 
+	generating special cases for different geometric products. The generic 
+	geometric product then jumps into a list of function pointers, based on its 
+	arguments, and then performs a fast and specialized geometric product. Gaigen 
+	is noticable faster than CLU, but still has unneccesary overhead.
+</P>
+<P>Note that both CLU and Gaigen need to store more in a multivector than just the 
+	actual components; they also need to store information about what's stored 
+	(which blades), as opposed to nKlein.
+</P>
+<P>4. GluCat</P>
+<P>I must admit that I haven't spend much time with GluCat. GluCat mentions itself 
+	that it can achieve about 2/3 the speed of nKlein. Considering how 
+	slow&nbsp;nKlein&nbsp;is, I have strong doubts about GluCat. Despite the fact 
+	that it uses MTL, it still uses virtual functions in places, and dynamic 
+	allocations using std::vector. Soon, I'll be doing performance measurements to 
+	test its speed. One feature worth mentioning is that GluCat implements the 
+	mother algebra, and treats everything else as subspaces. This offers a 
+	genericity not found in other libraries.</P>
+<P>
+	Currently Gaigen is the fastest implementation of the four. You may not like 
+	the external code-generation aspects of it, but it is very powerful and the 
+	supplied editor is very intuitive. It's performance is yet unmatched. However, 
+	allow me to quote from a paper by Leo Dorst and Stephen Mann (from&nbsp;<A href="http://carol.wins.uva.nl/~leo/clifford/dorst-mann-II.pdf">http://carol.wins.uva.nl/~leo/clifford/dorst-mann-II.pdf</A>, 
+	actual references will be included in the paper, sorry).</P>
+<P align="left"><EM>....That may be straightforward, but it is obviously inefficient in 
+		both space and time. This is even
+		<BR>
+		more urgent when we use the homogeneous model in which an m-dimensional 
+		Euclidean space
+		<BR>
+		requires an (m + 1)-dimensional geometric algebra in the homogeneous model, or 
+		the (m + 2)- dimensional<BR>
+		double homogeneous model. It seems a lost cause....</EM></P>
+<P align="left"><EM>...However, the recognition that the important elements are blades 
+		and their products suggests a more
+		<BR>
+		efficient implementation. When two blades multiply by inner or outer product, a 
+		blade of unique grade
+		<BR>
+		results. This suggests designing a data representation for the elements of 
+		geometric algebra that permits
+		<BR>
+		easy retrieval of their grades, and also to automatically generate optimized 
+		code for the inner and outer
+		<BR>
+		multiplication of blades of specific grades k and l. The geometric product 
+		generates a more general
+		<BR>
+		element of a mixed, but still limited, set of grades......</EM></P>
+<P align="left">Which gave me an idea:</P>
+<P align="left"><STRONG>My first try</STRONG></P>
+<P align="left">My first try at a geometric algebra library build upon these ideas 
+	by not only having a multivector type, but having a generic blade&lt;&nbsp;K 
+	&gt; class for different K-blades as well. Easy conversion between multivector 
+	and blades gave some flexibility, and it still allowed me to do efficient 
+	geometric products between just blades.
+</P>
+<P>This was definitely faster, but limited in many ways because as soon as a 
+	combination of blades was neccesary I had to resort to a full multivector. 
+	Then, luckily, I met Patrick Harty and through a discussion we came with a new 
+	idea, using C++ meta programming techniques.</P>
+<P><EM>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		For more information on meta programming in C++, I highly recommend the 
+		following sources:</EM></P>
+<P align="left"><EM><EM>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		</EM>Todd Velhuizen - Template Meta Programs - </EM><A href="http://osl.iu.edu/~tveldhui/papers/Template-Metaprograms/meta-art.html">
+		<EM>http://osl.iu.edu/~tveldhui/papers/Template-Metaprograms/meta-art.html</EM></A><EM>&nbsp;<BR>
+		<EM>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		</EM>A. Gurtovoy, D. Abrahams, </EM><A href="http://www.mywikinet.com/mpl/paper/html/index.html" target="_top">
+		<EM>The Boost C++ Metaprogramming Library</EM></A><EM>, March 2002 | [</EM><A href="http://www.mywikinet.com/mpl/paper/mpl_paper.pdf" target="_top"><EM>as 
+			.pdf</EM></A><EM>] [</EM><A href="http://www.mywikinet.com/mpl/paper/mpl_paper.html" target="_top"><EM>as 
+			single .html</EM></A><EM>]&nbsp;<BR>
+		<EM>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		</EM>Adrei Alexandrescu - Modern C++ Design - ISBN: 0201704315 </EM>
+</P>
+<P align="left"><EM><BR>
+	</EM><STRONG>Generic Elements and Lists of Grades</STRONG></P>
+<P align="left">We introduce a generic 'element' type that is parametrized on a 
+	list of grades and an algebra. Both are compile time template parameters. The 
+	algebra defines the scalar type and the dimension, and the list of grades 
+	defines which blades the element contains (which is like CLU's dynamic 
+	blade-lists).
+</P>
+<P align="left">Compile-time grade lists could very neatly be implemented using the 
+	MPL::sequence concept which I was just experimenting with for fun. For example:</P>
+<PRE>boost::mpl::vector_c&lt; size_t, 0, 1, 2, 3 &gt; multi_vector // Defines a list of grades of scalar, vector, bivector and trivector.<BR>boost::mpl::vector_c&lt; size_t, 0 &gt; scalar; // Defines a scalar grade<BR>boost::mpl::vector_c&lt; size_t,&nbsp;0, 2&nbsp; &gt; spinor; // Defines a scalar and bivector grade, resulting in a spinor.</PRE>
+<P align="left">Skipping over a few details, the element definition becomes:</P>
+<PRE>template&lt; typename GradeList, typename Algebra &gt;<BR>class element<BR>{<BR>	Algebra::scalar_type	m_components[ number_of_components&lt; GradeList, Algebra &gt;::type::value ];<BR><BR><BR><BR>};<BR></PRE>
+<P>Here <EM>number_of_components</EM> is a meta-function that calculates the number 
+	of components neccesary for the given gradelist in the given algebra. This way 
+	our element type only stores the absolutely neccesary elements.</P>
+<P><STRONG>The Geometric Product</STRONG></P>
+<P>So far so good. All seems well, but implementing the geometric product just 
+	became a bit more complicated. If you ever tried working out a geometric 
+	product on paper yourself, you might have noticed that if we use bitwise 
+	representations to denote basis-blade indices, we can simply use the 
+	xor-operator to calculate the resulting index. Allow me to explain, using G^8 
+	as an example again.</P>
+<P>A full multivector in G^8 has 8 components.</P>
+<P>1, e_1, e_2, e_3, e_12, e_13, e_23 and e_123.</P>
+<P>We can give them the following indices, if we set each bit to 1 if the 
+	corresponding basis-vector appears in the blade.</P>
+<PRE>1     = 000<BR>e_1&nbsp;  = 001<BR>e_2&nbsp;  = 010<BR>e_3&nbsp;  = 100<BR>e_12 &nbsp;= 011<BR>e_13&nbsp; = 101<BR>e_23&nbsp; = 110<BR>e_123 = 111</PRE>
+<P>And I think&nbsp;you see the pattern by now. The result of the geometric product 
+	between e_1 and e_23 becomes: 001 xor 110 = 111 = e_123. And voila. Combine 
+	this with a sign-table that calculates the sign of the result, and you've got 
+	the implementation of the geometric product. This is how CLU, nKlein and Gaigen 
+	do it all.</P>
+<P>However, because we only store those blades that we actually use in a 
+	multivector, our array indices no longer correspond with their bitwise 
+	representation. nKlein doesn't have this problem because it stores the full 
+	multivector, CLU solves this problem by using runtime conversions. Gaigen 
+	solves them by making special cases during external code generation.</P>
+<P>Again, meta programming comes to the rescue. I have implemented a compile time 
+	conversion between the scalar index in the component array of an element, to 
+	its bitwise representation and vice versa. This conversion depends on the 
+	algebra and gradelist of the elements that participate in the geometric 
+	product.</P>
+<P>Basically a single calculation of a geometric product becomes:</P>
+<PRE>result[ scalar_index&lt; bitwise_repr&lt; lhs &gt; XOR bitwise_repr&lt; rhs &gt; &gt; ] = sign&lt; bitwise_repr&lt; lhs &gt;, bitwise_repr&lt; rhs &gt; &gt; * lhs * rhs;</PRE>
+<P>Here too, I have used meta programming to calculate the sign of a single 
+	multiply during compile time. The actual implementation will be discussed in 
+	the paper.</P>
+<P><STRONG>Unrolling loops</STRONG></P>
+<P>Slowly I was making progress, trying to learn the MPL along the way. However, 
+	all was not well. Because the signtable and the other meta-functions take 
+	compile time parameters, I cannot use a runtime loop to calculate the geometric 
+	product, because runtime for-loop indices cannot be used as template 
+	parameters. This means I needed to unrol the loop at compiletime. This is done 
+	by slowly dispatching different tasks in a complete geometric-product tree:</P>
+<P>1. The generic geometric product dispatches to an outer-loop that iterates over 
+	the indices of the left-hand side.
+	<BR>
+	2. The outer loop dispatches to an inner-loop that iterates over the indices of 
+	the right hand side.<BR>
+	3. The inner loop calculates the bitwise representation of the resulting 
+	component and dispatches<BR>
+	4. We check whether the grade list of the result has that bitwise 
+	representation, and dispatch if true.<BR>
+	5. We obtain the result of the sign table, and dispatch based on a -1, 0 or 1.<BR>
+	6. We actuall emit a NOP, += * or -= * based on the sign table.</P>
+<P>All this results in the compile time unrolling of the geometric product, where <STRONG>
+		only those muls, adds and subs are done</STRONG> that&nbsp;are neccesary 
+	for the product. This means <STRONG>no loops, no conditional statements, no jumps</STRONG>, 
+	no nothing.
+</P>
+<P><STRONG>Free bonus features</STRONG></P>
+<P>But the fun doesn't stop here. We actually obtain a free bonus feature because 
+	of our generic implementation of the geometric product. Notice step 4 in the 
+	before mentioned compile-time dispatch. See that we check whether the grade 
+	list of the result has the actual grade of the product of lhs and rhs. If it 
+	doesn't we simply don't dispatch, and no code is generated. This means we can 
+	very easily implement the inner and outer product.</P>
+<P>We simply pass in a grade-list containing only those grades relevant for the 
+	inner- or outer-product, and the correct result is calculated. In fact, <STRONG>only 
+		that code is generated that actually contributes to the result. </STRONG>This 
+	means that we get the most efficient implementation for outer product and inner 
+	product for free. All we need is meta-functions that return grade lists for 
+	inner and outer product between two grade lists.</P>
+<P><STRONG>Conclusion</STRONG></P>
+<P>Once again, I apologize for the poor state of this text. The upcoming paper will 
+	have all the details, and a thorough explanation. I hope you could at least 
+	understand that the proposed implementation results in the <STRONG>most efficient </STRONG>
+	implementation possible (bearing cache-issues, but given that blades are fairly 
+	small this shouldn't be much of a problem). My initial tests have proven that 
+	the resulting code, if compiled in release mode, results in faster code than 
+	the one from Gaigen, nKlein or Clu.</P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
